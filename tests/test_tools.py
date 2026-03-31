@@ -25,7 +25,7 @@ from zernio_mcp.server import (
     queue_preview,
 )
 
-API_BASE = "https://api.zernio.com"
+API_BASE = "https://zernio.com/api"
 
 
 @respx.mock
