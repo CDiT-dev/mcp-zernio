@@ -18,7 +18,7 @@ API = "https://zernio.com/api"
 async def test_queue_create_slot():
     from zernio_mcp.tools.queue import queue_create_slot
     respx.post(f"{API}/v1/queue/slots").mock(return_value=httpx.Response(200, json={"slot": {"_id": "s1"}}))
-    result = await queue_create_slot(profile_id="p1", day="monday", time="09:00", platform="twitter")
+    result = await queue_create_slot(profile_id="p1", name="Morning Post", day="monday", time="09:00", platform="twitter")
     assert result["slot"]["_id"] == "s1"
 
 
