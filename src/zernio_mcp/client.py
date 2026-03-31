@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import ipaddress
 import socket
+import time
 from typing import Any
 from urllib.parse import urlparse
 
@@ -35,8 +36,8 @@ class SSRFError(Exception):
     """Raised when a URL fails SSRF validation."""
 
 
-def validate_url_for_ssrf(url: str) -> None:
-    """Reject URLs that could cause SSRF attacks."""
+async def validate_url_for_ssrf(url: str) -> None:
+    """Reject URLs that could cause SSRF attacks. Async to avoid blocking event loop."""
     parsed = urlparse(url)
 
     if parsed.scheme not in ("https",):
@@ -45,9 +46,11 @@ def validate_url_for_ssrf(url: str) -> None:
     if not parsed.hostname:
         raise SSRFError("URL has no hostname")
 
-    # Resolve hostname and check all IPs
+    loop = asyncio.get_event_loop()
     try:
-        addrinfo = socket.getaddrinfo(parsed.hostname, None)
+        addrinfo = await loop.run_in_executor(
+            None, socket.getaddrinfo, parsed.hostname, None
+        )
     except socket.gaierror:
         raise SSRFError(f"Cannot resolve hostname: {parsed.hostname}")
 
@@ -66,12 +69,57 @@ def strip_pii(data: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in data.items() if k not in _ACCOUNT_PII_FIELDS}
 
 
+# ---------------------------------------------------------------------------
+# Simple TTL cache for accounts/profiles (60s)
+# ---------------------------------------------------------------------------
+
+_cache: dict[str, tuple[float, Any]] = {}
+_CACHE_TTL = 60.0
+
+
+def cache_get(key: str) -> Any | None:
+    entry = _cache.get(key)
+    if entry and (time.monotonic() - entry[0]) < _CACHE_TTL:
+        return entry[1]
+    return None
+
+
+def cache_set(key: str, value: Any) -> None:
+    _cache[key] = (time.monotonic(), value)
+
+
+# ---------------------------------------------------------------------------
+# Shared HTTP client (connection pooling)
+# ---------------------------------------------------------------------------
+
+_shared_client: httpx.AsyncClient | None = None
+
+
+def get_shared_client() -> httpx.AsyncClient:
+    global _shared_client
+    if _shared_client is None or _shared_client.is_closed:
+        _shared_client = httpx.AsyncClient(
+            timeout=TIMEOUT,
+            follow_redirects=False,
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+        )
+    return _shared_client
+
+
+async def close_shared_client() -> None:
+    global _shared_client
+    if _shared_client and not _shared_client.is_closed:
+        await _shared_client.aclose()
+        _shared_client = None
+
+
 class ZernioClient:
     """Async client for the Zernio REST API v1."""
 
-    def __init__(self) -> None:
+    def __init__(self, http_client: httpx.AsyncClient | None = None) -> None:
         self._base = settings.zernio_api_base.rstrip("/")
         self._api_key = settings.zernio_api_key
+        self._http = http_client or get_shared_client()
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -92,31 +140,27 @@ class ZernioClient:
 
         for attempt in range(MAX_RETRIES + 1):
             try:
-                async with httpx.AsyncClient(
-                    timeout=TIMEOUT, follow_redirects=False
-                ) as client:
-                    resp = await client.request(
-                        method, url, headers=self._headers(),
-                        params=params, json=json_body,
+                resp = await self._http.request(
+                    method, url, headers=self._headers(),
+                    params=params, json=json_body,
+                )
+
+                if resp.status_code == 429 and attempt < MAX_RETRIES:
+                    await asyncio.sleep(2**attempt)
+                    continue
+
+                if resp.status_code >= 400:
+                    try:
+                        body = resp.json()
+                        msg = body.get("message", body.get("error", resp.text[:200]))
+                    except Exception:
+                        msg = resp.text[:200]
+                    raise ZernioAPIError(
+                        f"Zernio API error ({resp.status_code}): {msg}",
+                        status_code=resp.status_code,
                     )
 
-                    if resp.status_code == 429 and attempt < MAX_RETRIES:
-                        await asyncio.sleep(2**attempt)
-                        continue
-
-                    if resp.status_code >= 400:
-                        # Sanitize: never leak API key or internal details
-                        try:
-                            body = resp.json()
-                            msg = body.get("message", body.get("error", resp.text[:200]))
-                        except Exception:
-                            msg = resp.text[:200]
-                        raise ZernioAPIError(
-                            f"Zernio API error ({resp.status_code}): {msg}",
-                            status_code=resp.status_code,
-                        )
-
-                    return resp.json()
+                return resp.json()
 
             except httpx.TimeoutException:
                 if attempt < MAX_RETRIES:
@@ -158,7 +202,7 @@ class ZernioClient:
 
     async def fetch_url_bytes(self, url: str) -> tuple[bytes, str]:
         """Fetch bytes from a URL with SSRF protection and size/type validation."""
-        validate_url_for_ssrf(url)
+        await validate_url_for_ssrf(url)
 
         async with httpx.AsyncClient(
             timeout=TIMEOUT, follow_redirects=False, max_redirects=0

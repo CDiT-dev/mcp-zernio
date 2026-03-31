@@ -7,49 +7,59 @@ from zernio_mcp.client import validate_url_for_ssrf, SSRFError, strip_pii
 
 
 class TestSSRFValidation:
-    def test_rejects_http_scheme(self):
+    @pytest.mark.asyncio
+    async def test_rejects_http_scheme(self):
         with pytest.raises(SSRFError, match="Only HTTPS"):
-            validate_url_for_ssrf("http://example.com/image.jpg")
+            await validate_url_for_ssrf("http://example.com/image.jpg")
 
-    def test_rejects_file_scheme(self):
+    @pytest.mark.asyncio
+    async def test_rejects_file_scheme(self):
         with pytest.raises(SSRFError, match="Only HTTPS"):
-            validate_url_for_ssrf("file:///etc/passwd")
+            await validate_url_for_ssrf("file:///etc/passwd")
 
-    def test_rejects_ftp_scheme(self):
+    @pytest.mark.asyncio
+    async def test_rejects_ftp_scheme(self):
         with pytest.raises(SSRFError, match="Only HTTPS"):
-            validate_url_for_ssrf("ftp://example.com/file")
+            await validate_url_for_ssrf("ftp://example.com/file")
 
-    def test_rejects_no_hostname(self):
+    @pytest.mark.asyncio
+    async def test_rejects_no_hostname(self):
         with pytest.raises(SSRFError):
-            validate_url_for_ssrf("https://")
+            await validate_url_for_ssrf("https://")
 
-    def test_rejects_private_ip_10(self):
+    @pytest.mark.asyncio
+    async def test_rejects_private_ip_10(self):
         with pytest.raises(SSRFError, match="non-public"):
-            validate_url_for_ssrf("https://10.0.0.1/image.jpg")
+            await validate_url_for_ssrf("https://10.0.0.1/image.jpg")
 
-    def test_rejects_private_ip_192(self):
+    @pytest.mark.asyncio
+    async def test_rejects_private_ip_192(self):
         with pytest.raises(SSRFError, match="non-public"):
-            validate_url_for_ssrf("https://192.168.1.1/image.jpg")
+            await validate_url_for_ssrf("https://192.168.1.1/image.jpg")
 
-    def test_rejects_private_ip_172(self):
+    @pytest.mark.asyncio
+    async def test_rejects_private_ip_172(self):
         with pytest.raises(SSRFError, match="non-public"):
-            validate_url_for_ssrf("https://172.16.0.1/image.jpg")
+            await validate_url_for_ssrf("https://172.16.0.1/image.jpg")
 
-    def test_rejects_loopback(self):
+    @pytest.mark.asyncio
+    async def test_rejects_loopback(self):
         with pytest.raises(SSRFError, match="non-public"):
-            validate_url_for_ssrf("https://127.0.0.1/image.jpg")
+            await validate_url_for_ssrf("https://127.0.0.1/image.jpg")
 
-    def test_rejects_link_local(self):
+    @pytest.mark.asyncio
+    async def test_rejects_link_local(self):
         with pytest.raises(SSRFError, match="non-public"):
-            validate_url_for_ssrf("https://169.254.169.254/latest/meta-data/")
+            await validate_url_for_ssrf("https://169.254.169.254/latest/meta-data/")
 
-    def test_accepts_public_https(self):
-        # Should not raise
-        validate_url_for_ssrf("https://images.unsplash.com/photo.jpg")
+    @pytest.mark.asyncio
+    async def test_accepts_public_https(self):
+        await validate_url_for_ssrf("https://images.unsplash.com/photo.jpg")
 
-    def test_rejects_unresolvable_host(self):
+    @pytest.mark.asyncio
+    async def test_rejects_unresolvable_host(self):
         with pytest.raises(SSRFError, match="Cannot resolve"):
-            validate_url_for_ssrf("https://this-domain-does-not-exist-zxcvbnm.com/x")
+            await validate_url_for_ssrf("https://this-domain-does-not-exist-zxcvbnm.com/x")
 
 
 class TestPIIStripping:
