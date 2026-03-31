@@ -79,13 +79,28 @@ _CACHE_TTL = 60.0
 
 def cache_get(key: str) -> Any | None:
     entry = _cache.get(key)
-    if entry and (time.monotonic() - entry[0]) < _CACHE_TTL:
-        return entry[1]
+    if entry:
+        ts, value = entry[0], entry[1]
+        ttl = entry[2] if len(entry) > 2 else _CACHE_TTL
+        if (time.monotonic() - ts) < ttl:
+            return value
     return None
 
 
-def cache_set(key: str, value: Any) -> None:
-    _cache[key] = (time.monotonic(), value)
+def cache_set(key: str, value: Any, ttl: float | None = None) -> None:
+    _cache[key] = (time.monotonic(), value, ttl or _CACHE_TTL)
+
+
+def cache_invalidate(key: str) -> None:
+    """Remove a specific key from the cache."""
+    _cache.pop(key, None)
+
+
+def cache_invalidate_prefix(prefix: str) -> None:
+    """Remove all cache entries with keys starting with prefix."""
+    to_remove = [k for k in _cache if k.startswith(prefix)]
+    for k in to_remove:
+        del _cache[k]
 
 
 # ---------------------------------------------------------------------------
@@ -178,6 +193,12 @@ class ZernioClient:
 
     async def post(self, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("POST", path, json_body=body)
+
+    async def put(self, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+        return await self._request("PUT", path, json_body=body)
+
+    async def patch(self, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+        return await self._request("PATCH", path, json_body=body)
 
     async def delete(self, path: str) -> dict[str, Any]:
         return await self._request("DELETE", path)

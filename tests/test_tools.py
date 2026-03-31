@@ -9,21 +9,12 @@ import httpx
 import pytest
 import respx
 
-from zernio_mcp.server import (
-    accounts_list,
-    accounts_health,
-    profiles_list,
-    posts_create,
-    posts_get,
-    posts_list,
-    posts_delete,
-    posts_unpublish,
-    posts_retry,
-    media_upload,
-    analytics_posts,
-    analytics_insights,
-    queue_preview,
-)
+from zernio_mcp.tools.accounts import accounts_list, accounts_health
+from zernio_mcp.tools.profiles import profiles_list
+from zernio_mcp.tools.posts import posts_create, posts_get, posts_list, posts_delete, posts_unpublish, posts_retry
+from zernio_mcp.tools.media import media_upload
+from zernio_mcp.tools.analytics import analytics_posts, analytics_insights
+from zernio_mcp.tools.queue import queue_preview
 
 API_BASE = "https://zernio.com/api"
 
