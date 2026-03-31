@@ -63,8 +63,8 @@
 - [x] 10.3 Create `komodo.toml`: git source, ubuntu-smurf-mirror server, `[[ZERNIO_API_KEY]]` + `[[MCP_ZERNIO_CLIENT_SECRET]]` vault refs, webhook auto-redeploy
 - [x] 10.4 Check free port on ubuntu-smurf-mirror, assign to the stack (port 8717 confirmed via komodo-infra agent)
 - [x] 10.5 Add Caddy config: `mcp-zernio.cdit-dev.de` block with two-handle pattern, `flush_interval -1`, explicit read/write timeouts (caddy-expert agent completed)
-- [ ] 10.6 Add DNS A record for `mcp-zernio.cdit-dev.de` → 89.167.22.69 (nebula-1), grey cloud in Cloudflare (user action)
-- [ ] 10.7 Set Komodo vault secrets, deploy stack, redeploy Caddy
+- [x] 10.6 Add DNS A record for `mcp-zernio.cdit-dev.de` → 89.167.22.69 (nebula-1), grey cloud in Cloudflare (user created)
+- [x] 10.7 Set Komodo vault secrets, deploy stack, redeploy Caddy (ZERNIO_API_KEY from 1Password, Keycloak client created in cdit-mcp realm, all deployed)
 
 ## 11. Claude.ai Integration
 
