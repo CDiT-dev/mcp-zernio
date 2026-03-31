@@ -68,6 +68,6 @@
 
 ## 11. Claude.ai Integration
 
-- [ ] 11.1 Register as custom MCP connector in Claude.ai with OAuth client_id + client_secret
-- [ ] 11.2 Verify all 13 tools are accessible from Claude.ai mobile
-- [ ] 11.3 Test end-to-end: accounts_list → posts_create (draft) → posts_get → posts_delete
+- [x] 11.1 Register as custom MCP connector in Claude.ai with OAuth client_id + client_secret
+- [x] 11.2 Verify all 13 tools are accessible from Claude.ai mobile
+- [x] 11.3 Test end-to-end: accounts_list → posts_create (draft) → posts_get → posts_delete
