@@ -474,7 +474,7 @@ async def queue_preview(
 
 def main() -> None:
     if settings.mcp_transport == "http":
-        mcp.run(transport="sse", host=settings.host, port=settings.port)
+        mcp.run(transport="streamable-http", host=settings.host, port=settings.port)
     else:
         mcp.run(transport="stdio")
 
