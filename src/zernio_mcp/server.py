@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import base64
-import os
+from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastmcp import FastMCP
@@ -14,18 +14,30 @@ from zernio_mcp.client import (
     ZernioAPIError,
     ZernioClient,
     SSRFError,
+    cache_get,
+    cache_set,
+    close_shared_client,
+    get_shared_client,
     strip_pii,
     ALLOWED_MEDIA_TYPES,
 )
 from zernio_mcp.config import settings
 
-mcp = FastMCP("mcp-zernio", auth=build_auth())
+
+@asynccontextmanager
+async def lifespan(server):
+    get_shared_client()  # warm up connection pool
+    yield
+    await close_shared_client()
+
+
+mcp = FastMCP("mcp-zernio", auth=build_auth(), lifespan=lifespan)
 
 MAX_BASE64_BYTES = 2 * 1024 * 1024  # 2 MB
 
 
 def _client() -> ZernioClient:
-    return ZernioClient()
+    return ZernioClient(http_client=get_shared_client())
 
 
 def _error(msg: str) -> dict:
@@ -44,10 +56,15 @@ async def accounts_list() -> dict:
     Returns each account's id, platform, username, displayName, and profileName.
     Use this to find account IDs before calling posts_create.
     """
+    cached = cache_get("accounts_list")
+    if cached:
+        return cached
     try:
         data = await _client().get("/v1/accounts")
         accounts = data.get("accounts", data if isinstance(data, list) else [])
-        return {"accounts": [strip_pii(a) for a in accounts]}
+        result = {"accounts": [strip_pii(a) for a in accounts]}
+        cache_set("accounts_list", result)
+        return result
     except ZernioAPIError as e:
         return _error(e.message)
 
@@ -85,8 +102,13 @@ async def profiles_list() -> dict:
     Use profiles_list to identify which accounts belong to a brand, then pass
     account_ids from the profile to posts_create.
     """
+    cached = cache_get("profiles_list")
+    if cached:
+        return cached
     try:
-        return await _client().get("/v1/profiles")
+        result = await _client().get("/v1/profiles")
+        cache_set("profiles_list", result)
+        return result
     except ZernioAPIError as e:
         return _error(e.message)
 
@@ -213,17 +235,13 @@ async def posts_delete(post_id: str) -> dict:
     posts_get first.
     """
     try:
-        # Server-side guard: check status before deleting
-        post = await _client().get(f"/v1/posts/{post_id}")
-        post_data = post.get("post", post)
-        post_status = post_data.get("status", "")
-        if post_status in ("published",):
+        return await _client().delete(f"/v1/posts/{post_id}")
+    except ZernioAPIError as e:
+        if e.status_code in (409, 422) or "published" in e.message.lower():
             return _error(
                 "Cannot delete a published post. Use posts_unpublish instead "
                 "to remove it from the platform while keeping the Zernio record."
             )
-        return await _client().delete(f"/v1/posts/{post_id}")
-    except ZernioAPIError as e:
         return _error(e.message)
 
 
@@ -237,15 +255,12 @@ async def posts_unpublish(post_id: str) -> dict:
     posts_get first.
     """
     try:
-        post = await _client().get(f"/v1/posts/{post_id}")
-        post_data = post.get("post", post)
-        post_status = post_data.get("status", "")
-        if post_status in ("draft", "scheduled"):
-            return _error(
-                f"Cannot unpublish a {post_status} post. Use posts_delete instead."
-            )
         return await _client().post(f"/v1/posts/{post_id}/unpublish")
     except ZernioAPIError as e:
+        if e.status_code in (409, 422) or "draft" in e.message.lower() or "scheduled" in e.message.lower():
+            return _error(
+                "Cannot unpublish a draft or scheduled post. Use posts_delete instead."
+            )
         return _error(e.message)
 
 

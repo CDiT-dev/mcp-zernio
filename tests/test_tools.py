@@ -164,11 +164,9 @@ async def test_posts_list_caps_limit():
 @respx.mock
 @pytest.mark.asyncio
 async def test_posts_delete_rejects_published():
-    """Server-side guard: posts_delete rejects published posts."""
-    respx.get(f"{API_BASE}/v1/posts/post1").mock(
-        return_value=httpx.Response(200, json={
-            "post": {"_id": "post1", "status": "published"}
-        })
+    """API error on published post redirects to posts_unpublish."""
+    respx.delete(f"{API_BASE}/v1/posts/post1").mock(
+        return_value=httpx.Response(409, json={"error": "Cannot delete published post"})
     )
     result = await posts_delete("post1")
     assert "error" in result
@@ -178,11 +176,6 @@ async def test_posts_delete_rejects_published():
 @respx.mock
 @pytest.mark.asyncio
 async def test_posts_delete_allows_draft():
-    respx.get(f"{API_BASE}/v1/posts/post1").mock(
-        return_value=httpx.Response(200, json={
-            "post": {"_id": "post1", "status": "draft"}
-        })
-    )
     respx.delete(f"{API_BASE}/v1/posts/post1").mock(
         return_value=httpx.Response(200, json={"deleted": True})
     )
@@ -193,11 +186,9 @@ async def test_posts_delete_allows_draft():
 @respx.mock
 @pytest.mark.asyncio
 async def test_posts_unpublish_rejects_draft():
-    """Server-side guard: posts_unpublish rejects draft posts."""
-    respx.get(f"{API_BASE}/v1/posts/post1").mock(
-        return_value=httpx.Response(200, json={
-            "post": {"_id": "post1", "status": "draft"}
-        })
+    """API error on draft post redirects to posts_delete."""
+    respx.post(f"{API_BASE}/v1/posts/post1/unpublish").mock(
+        return_value=httpx.Response(422, json={"error": "Cannot unpublish draft post"})
     )
     result = await posts_unpublish("post1")
     assert "error" in result
