@@ -25,6 +25,7 @@ async def queue_preview(profile_id: str, limit: int = 5) -> dict:
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def queue_create_slot(
     profile_id: str,
+    name: str,
     day: str,
     time: str,
     platform: str,
@@ -33,13 +34,14 @@ async def queue_create_slot(
 
     Args:
         profile_id: The profile this slot belongs to.
+        name: Name for the slot (e.g., "Morning Twitter Post").
         day: Day of week (e.g., "monday", "tuesday").
         time: Time in HH:MM format (e.g., "09:00", "14:30").
         platform: Target platform (e.g., "twitter", "instagram").
     """
     try:
         result = await client().post("/v1/queue/slots", {
-            "profileId": profile_id, "day": day, "time": time, "platform": platform,
+            "profileId": profile_id, "name": name, "day": day, "time": time, "platform": platform,
         })
         cache_invalidate_prefix("queue_")
         return result
