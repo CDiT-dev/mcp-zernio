@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Zernio API
     zernio_api_key: SecretStr
-    zernio_api_base: str = "https://api.zernio.com"
+    zernio_api_base: str = "https://zernio.com/api"
 
     # Bearer token (for Claude Code, n8n, direct clients)
     mcp_zernio_api_key: SecretStr | None = None
