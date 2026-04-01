@@ -56,7 +56,7 @@ async def comments_delete(post_id: str, comment_id: str) -> dict:
         comment_id: The comment to delete.
     """
     try:
-        return await client().delete(f"/v1/inbox/comments/{post_id}?commentId={comment_id}")
+        return await client().delete(f"/v1/inbox/comments/{post_id}", commentId=comment_id)
     except ZernioAPIError as e:
         return error(e.message)
 

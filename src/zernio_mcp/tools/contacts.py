@@ -5,7 +5,7 @@ from __future__ import annotations
 from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
-from zernio_mcp.client import ZernioAPIError, cache_get, cache_set, cache_invalidate
+from zernio_mcp.client import ZernioAPIError, cache_get, cache_set, cache_invalidate_prefix
 from zernio_mcp.tools._common import client, error
 
 
@@ -57,7 +57,7 @@ async def contacts_create(
         if platform_user_id:
             body["platformUserId"] = platform_user_id
         result = await client().post("/v1/contacts", body)
-        cache_invalidate("contacts_all_20")
+        cache_invalidate_prefix("contacts_")
         return result
     except ZernioAPIError as e:
         return error(e.message)
@@ -113,7 +113,7 @@ async def contacts_delete(contact_id: str) -> dict:
     """
     try:
         result = await client().delete(f"/v1/contacts/{contact_id}")
-        cache_invalidate("contacts_all_20")
+        cache_invalidate_prefix("contacts_")
         return result
     except ZernioAPIError as e:
         return error(e.message)
