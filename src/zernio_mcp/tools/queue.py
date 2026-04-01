@@ -29,6 +29,7 @@ async def queue_create_slot(
     day: str,
     time: str,
     platform: str,
+    timezone: str = "Europe/Berlin",
 ) -> dict:
     """Create a recurring queue time slot.
 
@@ -38,10 +39,12 @@ async def queue_create_slot(
         day: Day of week (e.g., "monday", "tuesday").
         time: Time in HH:MM format (e.g., "09:00", "14:30").
         platform: Target platform (e.g., "twitter", "instagram").
+        timezone: IANA timezone (e.g., "Europe/Berlin", "America/New_York"). Defaults to Europe/Berlin.
     """
     try:
         result = await client().post("/v1/queue/slots", {
-            "profileId": profile_id, "name": name, "day": day, "time": time, "platform": platform,
+            "profileId": profile_id, "name": name, "day": day, "time": time,
+            "platform": platform, "timezone": timezone,
         })
         cache_invalidate_prefix("queue_")
         return result
