@@ -15,7 +15,7 @@ async def posts_create(
     platforms: list[dict],
     publish_now: bool = False,
     scheduled_for: str | None = None,
-    media_urls: list[str] | None = None,
+    media_items: list[dict] | None = None,
     profile_id: str | None = None,
 ) -> dict:
     """Create a social media post (draft, scheduled, or immediate publish).
@@ -35,6 +35,14 @@ async def posts_create(
     If the user has multiple accounts for the target platform and hasn't
     specified which one, call profiles_list first to identify the correct
     brand context, then confirm before posting.
+
+    Args:
+        content: Post text content.
+        platforms: Platform targets, each {"platform": "twitter", "accountId": "..."}.
+        publish_now: Publish immediately if True.
+        scheduled_for: ISO 8601 datetime for scheduled publishing.
+        media_items: Media attachments, each {"url": "...", "type": "image"|"video"}.
+        profile_id: Optional profile for brand context.
     """
     try:
         body: dict = {"content": content, "platforms": platforms}
@@ -42,8 +50,8 @@ async def posts_create(
             body["scheduledFor"] = scheduled_for
         elif publish_now:
             body["publishNow"] = True
-        if media_urls:
-            body["mediaItems"] = [{"url": u, "type": "image"} for u in media_urls]
+        if media_items:
+            body["mediaItems"] = media_items
         if profile_id:
             body["profileId"] = profile_id
         return await client().post("/v1/posts", body)
@@ -124,7 +132,7 @@ async def posts_update(
     post_id: str,
     content: str | None = None,
     platforms: list[dict] | None = None,
-    media_urls: list[str] | None = None,
+    media_items: list[dict] | None = None,
     scheduled_for: str | None = None,
 ) -> dict:
     """Edit a draft or scheduled post.
@@ -135,7 +143,7 @@ async def posts_update(
         post_id: The post to update.
         content: New post text content.
         platforms: Updated platform targets.
-        media_urls: Updated media URLs.
+        media_items: Media attachments, each {"url": "...", "type": "image"|"video"}.
         scheduled_for: New scheduled datetime (ISO 8601).
     """
     try:
@@ -144,8 +152,8 @@ async def posts_update(
             body["content"] = content
         if platforms is not None:
             body["platforms"] = platforms
-        if media_urls is not None:
-            body["mediaItems"] = [{"url": u, "type": "image"} for u in media_urls]
+        if media_items is not None:
+            body["mediaItems"] = media_items
         if scheduled_for is not None:
             body["scheduledFor"] = scheduled_for
         return await client().put(f"/v1/posts/{post_id}", body)

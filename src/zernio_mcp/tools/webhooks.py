@@ -5,7 +5,7 @@ from __future__ import annotations
 from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
-from zernio_mcp.client import ZernioAPIError
+from zernio_mcp.client import ZernioAPIError, validate_url_for_ssrf, SSRFError
 from zernio_mcp.tools._common import client, error
 
 
@@ -23,11 +23,14 @@ async def webhooks_create(url: str, events: list[str]) -> dict:
     """Create a webhook configuration.
 
     Args:
-        url: Webhook endpoint URL.
+        url: Webhook endpoint URL (HTTPS only, no private IPs).
         events: List of event types to subscribe to.
     """
     try:
+        await validate_url_for_ssrf(url)
         return await client().post("/v1/webhooks/settings", {"url": url, "events": events})
+    except SSRFError as e:
+        return error(str(e))
     except ZernioAPIError as e:
         return error(e.message)
 
@@ -37,16 +40,20 @@ async def webhooks_update(url: str | None = None, events: list[str] | None = Non
     """Update webhook configuration.
 
     Args:
-        url: New webhook URL.
+        url: New webhook URL (HTTPS only, no private IPs).
         events: Updated event types.
     """
     try:
+        if url is not None:
+            await validate_url_for_ssrf(url)
         body: dict = {}
         if url is not None:
             body["url"] = url
         if events is not None:
             body["events"] = events
         return await client().put("/v1/webhooks/settings", body)
+    except SSRFError as e:
+        return error(str(e))
     except ZernioAPIError as e:
         return error(e.message)
 

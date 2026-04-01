@@ -200,8 +200,9 @@ class ZernioClient:
     async def patch(self, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("PATCH", path, json_body=body)
 
-    async def delete(self, path: str) -> dict[str, Any]:
-        return await self._request("DELETE", path)
+    async def delete(self, path: str, **params: Any) -> dict[str, Any]:
+        clean = {k: v for k, v in params.items() if v is not None}
+        return await self._request("DELETE", path, params=clean or None)
 
     # --- Media upload helpers ---
 

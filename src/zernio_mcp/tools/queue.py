@@ -8,6 +8,11 @@ from zernio_mcp.server import mcp
 from zernio_mcp.client import ZernioAPIError, cache_get, cache_set, cache_invalidate_prefix
 from zernio_mcp.tools._common import client, error
 
+_DAY_MAP = {
+    "monday": 1, "tuesday": 2, "wednesday": 3, "thursday": 4,
+    "friday": 5, "saturday": 6, "sunday": 7,
+}
+
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def queue_preview(profile_id: str, limit: int = 5) -> dict:
@@ -41,10 +46,15 @@ async def queue_create_slot(
         platform: Target platform (e.g., "twitter", "instagram").
         timezone: IANA timezone (e.g., "Europe/Berlin", "America/New_York"). Defaults to Europe/Berlin.
     """
+    day_num = _DAY_MAP.get(day.lower())
+    if day_num is None:
+        return error(f"Invalid day '{day}'. Use: monday, tuesday, wednesday, thursday, friday, saturday, sunday")
     try:
         result = await client().post("/v1/queue/slots", {
-            "profileId": profile_id, "name": name, "day": day, "time": time,
-            "platform": platform, "timezone": timezone,
+            "profileId": profile_id,
+            "name": name,
+            "timezone": timezone,
+            "slots": [{"dayOfWeek": day_num, "time": time, "platform": platform}],
         })
         cache_invalidate_prefix("queue_")
         return result
@@ -89,7 +99,7 @@ async def queue_update_slot(slot_id: str, day: str | None = None, time: str | No
             body["time"] = time
         if platform is not None:
             body["platform"] = platform
-        result = await client().put("/v1/queue/slots", {"slotId": slot_id, **body})
+        result = await client().put(f"/v1/queue/slots/{slot_id}", body)
         cache_invalidate_prefix("queue_")
         return result
     except ZernioAPIError as e:

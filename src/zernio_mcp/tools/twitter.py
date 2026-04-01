@@ -32,7 +32,7 @@ async def twitter_unretweet(account_id: str, tweet_id: str) -> dict:
         tweet_id: The tweet to unretweet.
     """
     try:
-        return await client().delete(f"/v1/twitter/retweet?accountId={account_id}&tweetId={tweet_id}")
+        return await client().delete("/v1/twitter/retweet", accountId=account_id, tweetId=tweet_id)
     except ZernioAPIError as e:
         return error(e.message)
 

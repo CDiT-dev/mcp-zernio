@@ -35,7 +35,7 @@ async def test_queue_list_slots():
 @pytest.mark.asyncio
 async def test_queue_update_slot():
     from zernio_mcp.tools.queue import queue_update_slot
-    respx.put(f"{API}/v1/queue/slots").mock(return_value=httpx.Response(200, json={"updated": True}))
+    respx.put(f"{API}/v1/queue/slots/s1").mock(return_value=httpx.Response(200, json={"updated": True}))
     result = await queue_update_slot(slot_id="s1", time="14:00")
     assert result["updated"] is True
 
