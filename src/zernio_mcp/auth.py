@@ -29,12 +29,10 @@ def build_auth():
 
     from fastmcp.server.auth import (
         AccessToken,
-        JWTVerifier,
         MultiAuth,
-        RemoteAuthProvider,
         TokenVerifier,
     )
-    from pydantic import AnyHttpUrl
+    from fastmcp.server.auth.oidc_proxy import OIDCProxy
 
     class BearerTokenVerifier(TokenVerifier):
         """Validates incoming requests against a static API key."""
@@ -53,29 +51,31 @@ def build_auth():
                 scopes=["all"],
             )
 
-    keycloak_issuer = settings.keycloak_issuer
-    jwks_uri = f"{keycloak_issuer.rstrip('/')}/protocol/openid-connect/certs"
-
-    jwt_verifier = JWTVerifier(
-        jwks_uri=jwks_uri,
-        issuer=keycloak_issuer,
-        audience=settings.keycloak_audience,
-    )
-
-    keycloak_auth = RemoteAuthProvider(
-        token_verifier=jwt_verifier,
-        authorization_servers=[AnyHttpUrl(keycloak_issuer)],
-        base_url=settings.base_url,
-        scopes_supported=["openid"],
-        resource_name="Zernio MCP Server",
-    )
-
     verifiers: list[TokenVerifier] = []
     api_key = settings.mcp_zernio_api_key
     if api_key:
         verifiers.append(BearerTokenVerifier(api_key.get_secret_value()))
 
-    return MultiAuth(server=keycloak_auth, verifiers=verifiers)
+    keycloak_client_secret = settings.keycloak_client_secret
+    if not keycloak_client_secret:
+        logger.warning(
+            "KEYCLOAK_CLIENT_SECRET not set — OIDCProxy disabled, "
+            "only Bearer token auth available"
+        )
+        return None
+
+    config_url = (
+        f"{settings.keycloak_issuer.rstrip('/')}/"
+        ".well-known/openid-configuration"
+    )
+    oidc_auth = OIDCProxy(
+        config_url=config_url,
+        client_id=settings.keycloak_client_id,
+        client_secret=keycloak_client_secret,
+        base_url=settings.base_url,
+    )
+
+    return MultiAuth(server=oidc_auth, verifiers=verifiers)
 
 
 def generate_api_key() -> str:

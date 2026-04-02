@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     # Keycloak JWT (for Claude.ai/Desktop via OAuth)
     keycloak_issuer: str = ""
     keycloak_audience: str = "mcp-zernio"
+    keycloak_client_id: str = "mcp-zernio"
+    keycloak_client_secret: str = ""
 
     # Transport
     mcp_transport: str = "stdio"  # "stdio" or "http"
