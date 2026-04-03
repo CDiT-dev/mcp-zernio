@@ -14,3 +14,9 @@ services:
       - MCP_TRANSPORT=http
       - HOST=0.0.0.0
       - PORT=8717
+      - FASTMCP_HOME=/data/fastmcp
+    volumes:
+      - fastmcp-data:/data/fastmcp
+
+volumes:
+  fastmcp-data:
