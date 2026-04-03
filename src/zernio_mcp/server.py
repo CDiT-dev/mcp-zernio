@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastmcp import FastMCP
+from mcp.types import Icon
 
 from zernio_mcp.auth import build_auth
 from zernio_mcp.client import close_shared_client, get_shared_client
@@ -18,7 +19,17 @@ async def lifespan(server):
     await close_shared_client()
 
 
-mcp = FastMCP("mcp-zernio", auth=build_auth(), lifespan=lifespan)
+mcp = FastMCP(
+    "mcp-zernio",
+    auth=build_auth(),
+    lifespan=lifespan,
+    icons=[
+        Icon(
+            src="https://zernio.com/icon.svg?v=3",
+            mimeType="image/svg+xml",
+        ),
+    ],
+)
 
 
 def _register_tools():
