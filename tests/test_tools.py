@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import json
 
 import httpx
@@ -12,7 +11,7 @@ import respx
 from zernio_mcp.tools.accounts import accounts_list, accounts_health
 from zernio_mcp.tools.profiles import profiles_list
 from zernio_mcp.tools.posts import posts_create, posts_get, posts_list, posts_delete, posts_unpublish, posts_retry
-from zernio_mcp.tools.media import media_upload
+from zernio_mcp.tools.media import media_upload, media_get_upload_link, media_check_upload
 from zernio_mcp.tools.analytics import analytics_posts, analytics_insights
 from zernio_mcp.tools.queue import queue_preview
 
@@ -198,42 +197,6 @@ async def test_posts_retry():
     assert result["post"]["status"] == "published"
 
 
-@respx.mock
-@pytest.mark.asyncio
-async def test_media_upload_base64_small_image():
-    """Base64 path for mobile: small image uploads via presign flow."""
-    small_png = base64.b64encode(b"\x89PNG" + b"\x00" * 100).decode()
-
-    respx.post(f"{API_BASE}/v1/media/presign").mock(
-        return_value=httpx.Response(200, json={
-            "uploadUrl": "https://storage.googleapis.com/upload",
-            "publicUrl": "https://cdn.zernio.com/image.png",
-        })
-    )
-    respx.put("https://storage.googleapis.com/upload").mock(
-        return_value=httpx.Response(200)
-    )
-
-    result = await media_upload(base64_data=small_png, mime_type="image/png")
-    assert result["publicUrl"] == "https://cdn.zernio.com/image.png"
-
-
-@pytest.mark.asyncio
-async def test_media_upload_base64_too_large():
-    """Base64 path rejects images over 2MB."""
-    large = base64.b64encode(b"\x00" * (3 * 1024 * 1024)).decode()  # 3MB
-    result = await media_upload(base64_data=large, mime_type="image/png")
-    assert "error" in result
-    assert "2MB" in result["error"]
-
-
-@pytest.mark.asyncio
-async def test_media_upload_no_input():
-    result = await media_upload()
-    assert "error" in result
-    assert "url" in result["error"].lower() or "base64" in result["error"].lower()
-
-
 @pytest.mark.asyncio
 async def test_media_upload_ssrf_private_ip():
     result = await media_upload(url="https://192.168.1.1/image.jpg")
@@ -246,6 +209,32 @@ async def test_media_upload_ssrf_http_scheme():
     result = await media_upload(url="http://example.com/image.jpg")
     assert "error" in result
     assert "HTTPS" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_media_get_upload_link():
+    """media_get_upload_link returns a URL and token."""
+    result = await media_get_upload_link()
+    assert "uploadPageUrl" in result
+    assert "token" in result
+    assert "/upload?token=" in result["uploadPageUrl"]
+
+
+@pytest.mark.asyncio
+async def test_media_check_upload_pending():
+    """media_check_upload returns pending for unknown tokens."""
+    result = await media_check_upload(token="nonexistent")
+    assert result["status"] == "pending"
+
+
+@pytest.mark.asyncio
+async def test_media_check_upload_completed():
+    """media_check_upload returns publicUrl after upload completes."""
+    from zernio_mcp.upload import _upload_results
+    import time
+    _upload_results["test-token"] = ("https://cdn.zernio.com/test.png", time.monotonic())
+    result = await media_check_upload(token="test-token")
+    assert result["publicUrl"] == "https://cdn.zernio.com/test.png"
 
 
 @respx.mock

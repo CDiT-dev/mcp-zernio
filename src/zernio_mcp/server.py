@@ -40,6 +40,15 @@ def _register_tools():
 _register_tools()
 
 
+# ---------------------------------------------------------------------------
+# Custom HTTP routes: browser-based media upload
+# ---------------------------------------------------------------------------
+
+from zernio_mcp.upload import register_upload_routes  # noqa: E402
+
+register_upload_routes(mcp)
+
+
 def main() -> None:
     if settings.mcp_transport == "http":
         mcp.run(transport="streamable-http", host=settings.host, port=settings.port)
