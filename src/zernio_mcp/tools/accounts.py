@@ -13,7 +13,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def accounts_list() -> dict:
-    """List all connected social media accounts.
+    """[social] List all connected social media accounts.
 
     Returns each account's id, platform, username, displayName, and profileName.
     Use this to find account IDs before calling posts_create.
@@ -33,7 +33,7 @@ async def accounts_list() -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def accounts_health(account_id: str | None = None) -> dict:
-    """Check token health and expiry status for connected accounts.
+    """[social] Check token health and expiry status for connected accounts.
 
     Without account_id: returns status for all accounts.
     With account_id: returns detailed health for that specific account only.
@@ -63,7 +63,7 @@ async def accounts_health(account_id: str | None = None) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def accounts_update(account_id: str, settings: dict) -> dict:
-    """Update account settings.
+    """[social] Update account settings.
 
     Args:
         account_id: The account to update.
@@ -79,7 +79,7 @@ async def accounts_update(account_id: str, settings: dict) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def accounts_delete(account_id: str) -> dict:
-    """Disconnect a social media account from Zernio.
+    """[social] Disconnect a social media account from Zernio.
 
     This removes the OAuth connection. The account's posts remain on the platform.
 
@@ -96,7 +96,7 @@ async def accounts_delete(account_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def accounts_follower_stats() -> dict:
-    """Get follower count trends over time for all connected accounts.
+    """[social] Get follower count trends over time for all connected accounts.
 
     Returns per-account follower counts over time. Use this when asked
     "am I growing?" or "how are my followers doing?"

@@ -16,7 +16,7 @@ _DAY_MAP = {
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def queue_preview(profile_id: str, limit: int = 5) -> dict:
-    """Preview upcoming queue slots for scheduling context.
+    """[social] Preview upcoming queue slots for scheduling context.
 
     Returns slots with datetime (ISO 8601), platform, and occupied status.
     Present max 3 suggested open slots before asking the user to choose.
@@ -36,7 +36,7 @@ async def queue_create_slot(
     platform: str,
     timezone: str = "Europe/Berlin",
 ) -> dict:
-    """Create a recurring queue time slot.
+    """[social] Create a recurring queue time slot.
 
     Args:
         profile_id: The profile this slot belongs to.
@@ -64,7 +64,7 @@ async def queue_create_slot(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def queue_list_slots(profile_id: str | None = None) -> dict:
-    """List all configured recurring queue slots.
+    """[social] List all configured recurring queue slots.
 
     Args:
         profile_id: Optional. Filter slots by profile.
@@ -83,7 +83,7 @@ async def queue_list_slots(profile_id: str | None = None) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def queue_update_slot(slot_id: str, day: str | None = None, time: str | None = None, platform: str | None = None) -> dict:
-    """Update an existing queue slot.
+    """[social] Update an existing queue slot.
 
     Args:
         slot_id: The slot to update.
@@ -108,7 +108,7 @@ async def queue_update_slot(slot_id: str, day: str | None = None, time: str | No
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def queue_delete_slot(slot_id: str) -> dict:
-    """Delete a recurring queue slot.
+    """[social] Delete a recurring queue slot.
 
     Args:
         slot_id: The slot to remove.
@@ -123,7 +123,7 @@ async def queue_delete_slot(slot_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def queue_next_slot(profile_id: str) -> dict:
-    """Get the next available open queue slot.
+    """[social] Get the next available open queue slot.
 
     Returns the next unoccupied slot with datetime, platform, and slot_id.
 

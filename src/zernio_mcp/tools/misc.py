@@ -11,7 +11,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def usage_stats() -> dict:
-    """Get API usage counts, post counts, and billing information."""
+    """[social] Get API usage counts, post counts, and billing information."""
     try:
         return await client().get("/v1/usage-stats")
     except ZernioAPIError as e:
@@ -20,7 +20,7 @@ async def usage_stats() -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def account_groups_list() -> dict:
-    """List account groups with member accounts."""
+    """[social] List account groups with member accounts."""
     try:
         return await client().get("/v1/account-groups")
     except ZernioAPIError as e:
@@ -29,7 +29,7 @@ async def account_groups_list() -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def account_groups_create(name: str, account_ids: list[str]) -> dict:
-    """Create an account group.
+    """[social] Create an account group.
 
     Args:
         name: Group name.
@@ -43,7 +43,7 @@ async def account_groups_create(name: str, account_ids: list[str]) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def account_groups_delete(group_id: str) -> dict:
-    """Delete an account group.
+    """[social] Delete an account group.
 
     Args:
         group_id: The group to delete.

@@ -11,7 +11,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def contacts_list(query: str | None = None, limit: int = 20) -> dict:
-    """List contacts. Optionally search by name or identifier.
+    """[social] List contacts. Optionally search by name or identifier.
 
     Args:
         query: Optional search query.
@@ -37,7 +37,7 @@ async def contacts_create(
     platform: str | None = None,
     platform_user_id: str | None = None,
 ) -> dict:
-    """Create a contact.
+    """[social] Create a contact.
 
     Args:
         name: Contact name.
@@ -65,7 +65,7 @@ async def contacts_create(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def contacts_get(contact_id: str) -> dict:
-    """Get contact details.
+    """[social] Get contact details.
 
     Args:
         contact_id: The contact to retrieve.
@@ -83,7 +83,7 @@ async def contacts_update(
     email: str | None = None,
     phone: str | None = None,
 ) -> dict:
-    """Update a contact.
+    """[social] Update a contact.
 
     Args:
         contact_id: The contact to update.
@@ -106,7 +106,7 @@ async def contacts_update(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def contacts_delete(contact_id: str) -> dict:
-    """Delete a contact.
+    """[social] Delete a contact.
 
     Args:
         contact_id: The contact to delete.

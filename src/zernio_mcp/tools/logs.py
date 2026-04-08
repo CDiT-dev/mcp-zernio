@@ -11,7 +11,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def logs_posts(limit: int = 20) -> dict:
-    """Get post activity logs (created, published, failed, deleted events).
+    """[social] Get post activity logs (created, published, failed, deleted events).
 
     Args:
         limit: Max results (default 20).
@@ -24,7 +24,7 @@ async def logs_posts(limit: int = 20) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def logs_post_detail(post_id: str) -> dict:
-    """Get the full event history for a specific post.
+    """[social] Get the full event history for a specific post.
 
     Args:
         post_id: The post to get logs for.
@@ -37,7 +37,7 @@ async def logs_post_detail(post_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def logs_connections() -> dict:
-    """Get account connection and disconnection event logs."""
+    """[social] Get account connection and disconnection event logs."""
     try:
         return await client().get("/v1/connections/logs")
     except ZernioAPIError as e:

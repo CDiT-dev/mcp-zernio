@@ -23,7 +23,7 @@ _PLATFORM_MAP = {
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def research_download_post(url: str) -> dict:
-    """Download post metadata from any supported platform using a post URL.
+    """[social] Download post metadata from any supported platform using a post URL.
 
     Automatically detects the platform from the URL. Supports YouTube, Instagram,
     TikTok, Twitter/X, Facebook, LinkedIn, and Bluesky.
@@ -52,7 +52,7 @@ async def research_download_post(url: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def youtube_transcript(url: str) -> dict:
-    """Get a YouTube video's transcript text.
+    """[social] Get a YouTube video's transcript text.
 
     Args:
         url: YouTube video URL.
@@ -65,7 +65,7 @@ async def youtube_transcript(url: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def instagram_hashtag(hashtag: str) -> dict:
-    """Check Instagram hashtag performance — usage count, related hashtags, competition level.
+    """[social] Check Instagram hashtag performance — usage count, related hashtags, competition level.
 
     Args:
         hashtag: The hashtag to check (without #).
@@ -78,7 +78,7 @@ async def instagram_hashtag(hashtag: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def reddit_subreddit_rules(subreddit: str) -> dict:
-    """Check subreddit posting rules, allowed content types, and flair requirements.
+    """[social] Check subreddit posting rules, allowed content types, and flair requirements.
 
     Args:
         subreddit: Subreddit name (without r/).

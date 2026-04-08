@@ -11,7 +11,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def inbox_list(platform: str | None = None, status: str | None = None, limit: int = 20) -> dict:
-    """List conversations (DMs) across platforms.
+    """[social] List conversations (DMs) across platforms.
 
     Args:
         platform: Optional. Filter by platform.
@@ -30,7 +30,7 @@ async def inbox_get_conversation(
     include_messages: bool = True,
     message_limit: int = 20,
 ) -> dict:
-    """Get a conversation and its messages.
+    """[social] Get a conversation and its messages.
 
     Returns conversation metadata (platform, participant, status) plus
     the most recent messages. Set include_messages=False to get only
@@ -56,7 +56,7 @@ async def inbox_get_conversation(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def inbox_update(conversation_id: str, status: str) -> dict:
-    """Update conversation metadata (e.g., mark as read, archive).
+    """[social] Update conversation metadata (e.g., mark as read, archive).
 
     Args:
         conversation_id: The conversation to update.
@@ -70,7 +70,7 @@ async def inbox_update(conversation_id: str, status: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def inbox_messages_send(conversation_id: str, content: str) -> dict:
-    """Send a reply in a conversation.
+    """[social] Send a reply in a conversation.
 
     IMPORTANT: Confirm message content with the user before sending.
     This sends a real message to another person.
@@ -87,7 +87,7 @@ async def inbox_messages_send(conversation_id: str, content: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def inbox_message_edit(conversation_id: str, message_id: str, content: str) -> dict:
-    """Edit a sent message.
+    """[social] Edit a sent message.
 
     Args:
         conversation_id: The conversation containing the message.
@@ -105,7 +105,7 @@ async def inbox_message_edit(conversation_id: str, message_id: str, content: str
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def inbox_message_delete(conversation_id: str, message_id: str) -> dict:
-    """Delete a message from a conversation.
+    """[social] Delete a message from a conversation.
 
     Args:
         conversation_id: The conversation containing the message.

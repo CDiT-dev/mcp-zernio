@@ -13,7 +13,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def reddit_search(query: str, subreddit: str | None = None, limit: int = 20) -> dict:
-    """Search Reddit posts.
+    """[social] Search Reddit posts.
 
     Args:
         query: Search query string.
@@ -28,7 +28,7 @@ async def reddit_search(query: str, subreddit: str | None = None, limit: int = 2
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def reddit_feed(subreddit: str, limit: int = 20) -> dict:
-    """Get a subreddit's feed (recent posts).
+    """[social] Get a subreddit's feed (recent posts).
 
     Args:
         subreddit: Subreddit name (without r/).
@@ -42,7 +42,7 @@ async def reddit_feed(subreddit: str, limit: int = 20) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def reddit_subreddits(account_id: str) -> dict:
-    """List the user's joined subreddits. Call this before reddit_flairs to find subreddit names.
+    """[social] List the user's joined subreddits. Call this before reddit_flairs to find subreddit names.
 
     Args:
         account_id: Reddit account ID.
@@ -61,7 +61,7 @@ async def reddit_subreddits(account_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def reddit_flairs(account_id: str, subreddit: str) -> dict:
-    """Get available flairs for a subreddit. Call reddit_subreddits first to find subreddit names.
+    """[social] Get available flairs for a subreddit. Call reddit_subreddits first to find subreddit names.
 
     Args:
         account_id: Reddit account ID.
@@ -83,7 +83,7 @@ async def reddit_flairs(account_id: str, subreddit: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def linkedin_mentions(account_id: str) -> dict:
-    """Get recent LinkedIn mentions of the user or organization.
+    """[social] Get recent LinkedIn mentions of the user or organization.
 
     Args:
         account_id: LinkedIn account ID.
@@ -96,7 +96,7 @@ async def linkedin_mentions(account_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def linkedin_org_analytics(account_id: str) -> dict:
-    """Get LinkedIn organization analytics — follower growth, impressions, engagement.
+    """[social] Get LinkedIn organization analytics — follower growth, impressions, engagement.
 
     Args:
         account_id: LinkedIn organization account ID.
@@ -117,7 +117,7 @@ async def linkedin_org_analytics(account_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def pinterest_boards(account_id: str) -> dict:
-    """List Pinterest boards with names and pin counts.
+    """[social] List Pinterest boards with names and pin counts.
 
     Args:
         account_id: Pinterest account ID.
@@ -138,7 +138,7 @@ async def pinterest_boards(account_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def youtube_playlists(account_id: str) -> dict:
-    """List YouTube playlists with titles and video counts.
+    """[social] List YouTube playlists with titles and video counts.
 
     Args:
         account_id: YouTube account ID.

@@ -11,7 +11,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def broadcasts_list(limit: int = 20) -> dict:
-    """List broadcast campaigns.
+    """[social] List broadcast campaigns.
 
     Args:
         limit: Max results (default 20).
@@ -24,7 +24,7 @@ async def broadcasts_list(limit: int = 20) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def broadcasts_create(name: str, content: str, account_ids: list[str]) -> dict:
-    """Create a broadcast campaign.
+    """[social] Create a broadcast campaign.
 
     Args:
         name: Campaign name.
@@ -41,7 +41,7 @@ async def broadcasts_create(name: str, content: str, account_ids: list[str]) -> 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def broadcasts_get(broadcast_id: str) -> dict:
-    """Get broadcast campaign details including status and metrics.
+    """[social] Get broadcast campaign details including status and metrics.
 
     Args:
         broadcast_id: The broadcast to retrieve.
@@ -54,7 +54,7 @@ async def broadcasts_get(broadcast_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def broadcasts_update(broadcast_id: str, name: str | None = None, content: str | None = None) -> dict:
-    """Update a broadcast campaign.
+    """[social] Update a broadcast campaign.
 
     Args:
         broadcast_id: The broadcast to update.
@@ -74,7 +74,7 @@ async def broadcasts_update(broadcast_id: str, name: str | None = None, content:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def broadcasts_delete(broadcast_id: str) -> dict:
-    """Delete a broadcast campaign.
+    """[social] Delete a broadcast campaign.
 
     Args:
         broadcast_id: The broadcast to delete.

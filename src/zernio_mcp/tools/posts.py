@@ -18,7 +18,7 @@ async def posts_create(
     media_items: list[dict] | None = None,
     profile_id: str | None = None,
 ) -> dict:
-    """Create a social media post (draft, scheduled, or immediate publish).
+    """[social] Create a social media post (draft, scheduled, or immediate publish).
 
     Three modes:
       - Draft (default): omit publish_now and scheduled_for
@@ -61,7 +61,7 @@ async def posts_create(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def posts_get(post_id: str) -> dict:
-    """Get a single post by ID, including status, platformPostUrl, and failure_reason.
+    """[social] Get a single post by ID, including status, platformPostUrl, and failure_reason.
 
     Use this to check post status after creation. For failed posts, the response
     includes failure_reason (e.g., "Image aspect ratio rejected").
@@ -81,7 +81,7 @@ async def posts_list(
     limit: int = 20,
     offset: int = 0,
 ) -> dict:
-    """List posts with optional filters.
+    """[social] List posts with optional filters.
 
     Filter by status (draft, scheduled, published, failed), platform, or
     date range (ISO 8601). To see failed posts: posts_list(status="failed")
@@ -98,7 +98,7 @@ async def posts_list(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def posts_delete(post_id: str) -> dict:
-    """Delete a draft or scheduled post. For published posts, use posts_unpublish."""
+    """[social] Delete a draft or scheduled post. For published posts, use posts_unpublish."""
     try:
         return await client().delete(f"/v1/posts/{post_id}")
     except ZernioAPIError as e:
@@ -109,7 +109,7 @@ async def posts_delete(post_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def posts_unpublish(post_id: str) -> dict:
-    """Remove a published post from the platform. For drafts, use posts_delete."""
+    """[social] Remove a published post from the platform. For drafts, use posts_delete."""
     try:
         return await client().post(f"/v1/posts/{post_id}/unpublish")
     except ZernioAPIError as e:
@@ -120,7 +120,7 @@ async def posts_unpublish(post_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def posts_retry(post_id: str) -> dict:
-    """Retry a failed post. Call posts_get first to check failure_reason."""
+    """[social] Retry a failed post. Call posts_get first to check failure_reason."""
     try:
         return await client().post(f"/v1/posts/{post_id}/retry")
     except ZernioAPIError as e:
@@ -135,7 +135,7 @@ async def posts_update(
     media_items: list[dict] | None = None,
     scheduled_for: str | None = None,
 ) -> dict:
-    """Edit a draft or scheduled post.
+    """[social] Edit a draft or scheduled post.
 
     Only draft and scheduled posts can be edited. Published posts cannot be modified.
 
@@ -163,7 +163,7 @@ async def posts_update(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def posts_bulk_upload(csv_content: str) -> dict:
-    """Import multiple posts from CSV data.
+    """[social] Import multiple posts from CSV data.
 
     Use for 5 or more posts at once. For fewer posts, use posts_create individually.
     Returns a summary with created count, failed count, and any errors per row.

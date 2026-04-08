@@ -21,7 +21,7 @@ async def analytics_posts(
     to_date: str | None = None,
     limit: int = 10,
 ) -> dict:
-    """Get per-post engagement metrics (likes, comments, shares, impressions).
+    """[social] Get per-post engagement metrics (likes, comments, shares, impressions).
 
     Without post_id: returns paginated list sorted by engagement.
     With post_id: returns engagement timeline for that specific post
@@ -46,7 +46,7 @@ async def analytics_insights(
     to_date: str | None = None,
     origin: Literal["all", "via_zernio", "imported"] = "all",
 ) -> dict:
-    """Get aggregated analytics insights.
+    """[social] Get aggregated analytics insights.
 
     Use best_time when asked "when should I post?"
     Use content_decay when asked "how long do my posts stay relevant?"
@@ -75,7 +75,7 @@ async def analytics_youtube_daily(
     from_date: str | None = None,
     to_date: str | None = None,
 ) -> dict:
-    """Get YouTube daily view statistics.
+    """[social] Get YouTube daily view statistics.
 
     Args:
         account_id: YouTube account ID.
@@ -98,7 +98,7 @@ async def analytics_instagram(
     from_date: str | None = None,
     to_date: str | None = None,
 ) -> dict:
-    """Get Instagram account performance and audience demographics.
+    """[social] Get Instagram account performance and audience demographics.
 
     Returns reach, impressions, profile views, follower growth.
     When include_demographics=True (default), also returns age ranges,

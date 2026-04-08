@@ -11,7 +11,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def profiles_list() -> dict:
-    """List all brand profile groupings with their associated account IDs.
+    """[social] List all brand profile groupings with their associated account IDs.
 
     A profile is a brand grouping containing one or more connected accounts.
     Use profiles_list to identify which accounts belong to a brand, then pass
@@ -30,7 +30,7 @@ async def profiles_list() -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def profiles_create(name: str) -> dict:
-    """Create a new brand profile.
+    """[social] Create a new brand profile.
 
     Args:
         name: Name for the new profile (e.g., "CDIT Brand").
@@ -45,7 +45,7 @@ async def profiles_create(name: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def profiles_get(profile_id: str) -> dict:
-    """Get details for a specific brand profile.
+    """[social] Get details for a specific brand profile.
 
     Args:
         profile_id: The profile to retrieve.
@@ -58,7 +58,7 @@ async def profiles_get(profile_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def profiles_update(profile_id: str, name: str) -> dict:
-    """Update a brand profile.
+    """[social] Update a brand profile.
 
     Args:
         profile_id: The profile to update.
@@ -74,7 +74,7 @@ async def profiles_update(profile_id: str, name: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def profiles_delete(profile_id: str) -> dict:
-    """Delete a brand profile. Connected accounts are not disconnected.
+    """[social] Delete a brand profile. Connected accounts are not disconnected.
 
     Args:
         profile_id: The profile to delete.
