@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 
 from fastmcp import FastMCP
 from mcp.types import Icon
 
-from zernio_mcp.auth import build_auth
+from .auth import BearerTokenVerifier
 from zernio_mcp.client import close_shared_client, get_shared_client
 from zernio_mcp.config import settings
 
@@ -19,9 +20,12 @@ async def lifespan(server):
     await close_shared_client()
 
 
+_api_key = os.getenv("MCP_API_KEY", "")
+_auth = BearerTokenVerifier(api_key=_api_key) if _api_key else None
+
 mcp = FastMCP(
     "mcp-zernio",
-    auth=build_auth(),
+    auth=_auth,
     lifespan=lifespan,
     icons=[
         Icon(

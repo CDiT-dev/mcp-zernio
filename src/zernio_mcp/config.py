@@ -11,15 +11,6 @@ class Settings(BaseSettings):
     zernio_api_key: SecretStr
     zernio_api_base: str = "https://zernio.com/api"
 
-    # Bearer token (for Claude Code, n8n, direct clients)
-    mcp_zernio_api_key: SecretStr | None = None
-
-    # Keycloak JWT (for Claude.ai/Desktop via OAuth)
-    keycloak_issuer: str = ""
-    keycloak_audience: str = "mcp-zernio"
-    keycloak_client_id: str = "mcp-zernio"
-    keycloak_client_secret: str = ""
-
     # Transport
     mcp_transport: str = "stdio"  # "stdio" or "http"
     host: str = "0.0.0.0"
@@ -27,10 +18,6 @@ class Settings(BaseSettings):
 
     # Public URL (used in OAuth metadata — must be the external URL, not 0.0.0.0)
     public_url: str = "https://mcp-zernio.cdit-dev.de"
-
-    @property
-    def base_url(self) -> str:
-        return self.public_url
 
 
 settings = Settings()  # type: ignore[call-arg]
