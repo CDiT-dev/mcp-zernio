@@ -72,6 +72,8 @@ async def inbox_update(conversation_id: str, status: str) -> dict:
 async def inbox_messages_send(conversation_id: str, content: str) -> dict:
     """[social] Send a reply in a conversation.
 
+    Disambiguation: For social media DMs/inbox → zernio. For live-chat/CRM messages → watermelon.
+
     IMPORTANT: Confirm message content with the user before sending.
     This sends a real message to another person.
 
