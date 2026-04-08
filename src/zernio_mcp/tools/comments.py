@@ -15,7 +15,7 @@ async def comments_list(
     platform: str | None = None,
     limit: int = 20,
 ) -> dict:
-    """List comments. Without post_id: all comments. With post_id: comments for that post.
+    """[social] List comments. Without post_id: all comments. With post_id: comments for that post.
 
     Args:
         post_id: Optional. Filter to a specific post's comments.
@@ -32,7 +32,7 @@ async def comments_list(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def comments_reply(post_id: str, comment_id: str, content: str) -> dict:
-    """Reply to a comment. Confirm reply content with the user before sending.
+    """[social] Reply to a comment. Confirm reply content with the user before sending.
 
     Args:
         post_id: The post containing the comment.
@@ -49,7 +49,7 @@ async def comments_reply(post_id: str, comment_id: str, content: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def comments_delete(post_id: str, comment_id: str) -> dict:
-    """Delete a comment.
+    """[social] Delete a comment.
 
     Args:
         post_id: The post containing the comment.
@@ -63,7 +63,7 @@ async def comments_delete(post_id: str, comment_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def comments_hide(post_id: str, comment_id: str) -> dict:
-    """Hide a comment from public view.
+    """[social] Hide a comment from public view.
 
     Args:
         post_id: The post containing the comment.
@@ -77,7 +77,7 @@ async def comments_hide(post_id: str, comment_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def comments_like(post_id: str, comment_id: str) -> dict:
-    """Like a comment.
+    """[social] Like a comment.
 
     Args:
         post_id: The post containing the comment.
@@ -91,7 +91,7 @@ async def comments_like(post_id: str, comment_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def comments_private_reply(post_id: str, comment_id: str, content: str) -> dict:
-    """Send a private reply to a commenter. Confirm with user before sending.
+    """[social] Send a private reply to a commenter. Confirm with user before sending.
 
     Args:
         post_id: The post containing the comment.

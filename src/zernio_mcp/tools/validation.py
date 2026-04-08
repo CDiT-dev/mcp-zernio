@@ -11,7 +11,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def validate_post_length(content: str, platform: str) -> dict:
-    """Quick text-only check: does this content fit the platform's character limit?
+    """[social] Quick text-only check: does this content fit the platform's character limit?
 
     Fast pre-flight check — no media validation. Returns valid/invalid with
     remaining character count or overage.
@@ -34,7 +34,7 @@ async def validate_post(
     platforms: list[dict],
     media_urls: list[str] | None = None,
 ) -> dict:
-    """Full pre-flight validation: content + media + platform config.
+    """[social] Full pre-flight validation: content + media + platform config.
 
     Validates everything before posting — character limits, media dimensions,
     platform-specific requirements. Returns per-platform validation results.
@@ -55,7 +55,7 @@ async def validate_post(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def validate_media(media_url: str, platform: str) -> dict:
-    """Validate media dimensions, format, and size against platform requirements.
+    """[social] Validate media dimensions, format, and size against platform requirements.
 
     Args:
         media_url: URL of the media to validate.

@@ -11,7 +11,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def reviews_list(limit: int = 20) -> dict:
-    """List Google Business reviews with rating, content, author, and reply status.
+    """[social] List Google Business reviews with rating, content, author, and reply status.
 
     Args:
         limit: Max results (default 20).
@@ -24,7 +24,7 @@ async def reviews_list(limit: int = 20) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def reviews_reply(review_id: str, content: str) -> dict:
-    """Reply to a Google Business review. This is publicly visible — confirm with user.
+    """[social] Reply to a Google Business review. This is publicly visible — confirm with user.
 
     Args:
         review_id: The review to reply to.

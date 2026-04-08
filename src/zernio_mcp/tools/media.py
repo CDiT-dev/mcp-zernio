@@ -16,7 +16,7 @@ async def media_upload(
     url: str,
     file_name: str = "upload",
 ) -> dict:
-    """Upload media from a URL for use in posts. Returns publicUrl.
+    """[social] Upload media from a URL for use in posts. Returns publicUrl.
 
     Provide a publicly accessible HTTPS URL pointing to an image or video.
     Supported formats: JPG, PNG, WebP, GIF, MP4, MOV, WebM.
@@ -40,7 +40,7 @@ async def media_upload(
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def media_get_upload_link() -> dict:
-    """Get a browser upload link for images/videos.
+    """[social] Get a browser upload link for images/videos.
 
     Use this when the user wants to upload a local file (e.g. pasted an image
     in Claude.ai). Returns a one-time upload URL that the user opens in their
@@ -60,7 +60,7 @@ async def media_get_upload_link() -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def media_check_upload(token: str) -> dict:
-    """Check if a browser upload has completed and get the publicUrl.
+    """[social] Check if a browser upload has completed and get the publicUrl.
 
     Call this after giving the user an upload link from media_get_upload_link.
     If the upload is done, returns {publicUrl}. If still pending, returns

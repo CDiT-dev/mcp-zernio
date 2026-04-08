@@ -11,7 +11,7 @@ from zernio_mcp.tools._common import client, error
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def twitter_retweet(account_id: str, tweet_id: str) -> dict:
-    """Retweet a tweet. This is publicly visible — confirm with user first.
+    """[social] Retweet a tweet. This is publicly visible — confirm with user first.
 
     Args:
         account_id: Your Twitter account ID.
@@ -25,7 +25,7 @@ async def twitter_retweet(account_id: str, tweet_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def twitter_unretweet(account_id: str, tweet_id: str) -> dict:
-    """Undo a retweet.
+    """[social] Undo a retweet.
 
     Args:
         account_id: Your Twitter account ID.
@@ -39,7 +39,7 @@ async def twitter_unretweet(account_id: str, tweet_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def twitter_bookmark(account_id: str, tweet_id: str) -> dict:
-    """Bookmark a tweet (private — only visible to you).
+    """[social] Bookmark a tweet (private — only visible to you).
 
     Args:
         account_id: Your Twitter account ID.
@@ -53,7 +53,7 @@ async def twitter_bookmark(account_id: str, tweet_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def twitter_follow(account_id: str, target_user_id: str) -> dict:
-    """Follow a Twitter user. This is publicly visible — confirm with user first.
+    """[social] Follow a Twitter user. This is publicly visible — confirm with user first.
 
     Args:
         account_id: Your Twitter account ID.
