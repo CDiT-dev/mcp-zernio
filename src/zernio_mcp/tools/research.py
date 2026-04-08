@@ -25,6 +25,8 @@ _PLATFORM_MAP = {
 async def research_download_post(url: str) -> dict:
     """[social] Download post metadata from any supported platform using a post URL.
 
+    Disambiguation: For social media content → zernio. For notes/documents → siyuan.
+
     Automatically detects the platform from the URL. Supports YouTube, Instagram,
     TikTok, Twitter/X, Facebook, LinkedIn, and Bluesky.
 
