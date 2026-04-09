@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
@@ -31,7 +33,7 @@ async def queue_preview(profile_id: str, limit: int = 5) -> dict:
 async def queue_create_slot(
     profile_id: str,
     name: str,
-    day: str,
+    day: Literal["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
     time: str,
     platform: str,
     timezone: str = "Europe/Berlin",

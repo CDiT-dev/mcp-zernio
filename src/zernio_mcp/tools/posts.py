@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
@@ -38,7 +40,7 @@ async def posts_create(
 
     Args:
         content: Post text content.
-        platforms: Platform targets, each {"platform": "twitter", "accountId": "..."}.
+        platforms: Platform targets. Each platform object must include 'accountId' (str) and may include platform-specific options. Example: [{'accountId': 'acc_123'}].
         publish_now: Publish immediately if True.
         scheduled_for: ISO 8601 datetime for scheduled publishing.
         media_items: Media attachments, each {"url": "...", "type": "image"|"video"}.
@@ -74,7 +76,7 @@ async def posts_get(post_id: str) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def posts_list(
-    status: str | None = None,
+    status: Literal["draft", "scheduled", "published", "failed"] | None = None,
     platform: str | None = None,
     from_date: str | None = None,
     to_date: str | None = None,
