@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.2] - 2026-04-11
+
+- fix: pre-check post status in delete/unpublish to avoid Zernio API 500s
+
+
 ## [0.3.1] - 2026-04-11
 
 - feat: add thread_items support for Twitter/X and Bluesky (CDI-968)
