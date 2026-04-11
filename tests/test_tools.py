@@ -10,7 +10,7 @@ import respx
 
 from zernio_mcp.tools.accounts import accounts_list, accounts_health
 from zernio_mcp.tools.profiles import profiles_list
-from zernio_mcp.tools.posts import posts_create, posts_get, posts_list, posts_delete, posts_unpublish, posts_retry
+from zernio_mcp.tools.posts import posts_create, posts_get, posts_list, posts_delete, posts_unpublish, posts_retry, MediaItem, ThreadItem
 from zernio_mcp.tools.media import media_upload, media_get_upload_link, media_check_upload
 from zernio_mcp.tools.analytics import analytics_posts, analytics_insights
 from zernio_mcp.tools.queue import queue_preview
@@ -293,3 +293,154 @@ async def test_api_error_does_not_leak_key():
     result = await accounts_list()
     assert "error" in result
     assert "test-key-for-testing" not in result["error"]
+
+
+# ---------------------------------------------------------------------------
+# Thread items (Twitter/X and Bluesky)
+# ---------------------------------------------------------------------------
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_create_thread_twitter():
+    """Thread items produce correct API payload for Twitter."""
+    respx.post(f"{API_BASE}/v1/posts").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post_thread", "status": "published"}
+        })
+    )
+    result = await posts_create(
+        platforms=[{"platform": "twitter", "accountId": "a1"}],
+        publish_now=True,
+        thread_items=[
+            ThreadItem(content="First tweet"),
+            ThreadItem(content="Second tweet", media_items=[MediaItem(url="https://img.test/1.jpg", type="image")]),
+            ThreadItem(content="Third tweet"),
+        ],
+    )
+    assert result["post"]["_id"] == "post_thread"
+    req = respx.calls.last.request
+    body = json.loads(req.content)
+    assert body["content"] == ""
+    assert body["publishNow"] is True
+    psd = body["platforms"][0]["platformSpecificData"]
+    assert len(psd["threadItems"]) == 3
+    assert psd["threadItems"][0]["content"] == "First tweet"
+    assert psd["threadItems"][1]["mediaItems"] == [{"url": "https://img.test/1.jpg", "type": "image"}]
+    assert "mediaItems" not in psd["threadItems"][0]
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_create_thread_bluesky():
+    """Thread items work for Bluesky."""
+    respx.post(f"{API_BASE}/v1/posts").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post_bsky", "status": "draft"}
+        })
+    )
+    result = await posts_create(
+        platforms=[{"platform": "bluesky", "accountId": "b1"}],
+        thread_items=[
+            ThreadItem(content="Skeet one"),
+            ThreadItem(content="Skeet two"),
+        ],
+    )
+    req = respx.calls.last.request
+    body = json.loads(req.content)
+    psd = body["platforms"][0]["platformSpecificData"]
+    assert len(psd["threadItems"]) == 2
+    assert body["content"] == ""
+
+
+@pytest.mark.asyncio
+async def test_posts_create_thread_rejects_unsupported_platform():
+    """Threads with non-twitter/bluesky platforms return an error."""
+    result = await posts_create(
+        platforms=[{"platform": "instagram", "accountId": "i1"}],
+        thread_items=[
+            ThreadItem(content="Nope"),
+            ThreadItem(content="Also nope"),
+        ],
+    )
+    assert "error" in result
+    assert "instagram" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_posts_create_thread_rejects_content():
+    """Threads with top-level content return an error."""
+    result = await posts_create(
+        content="This should fail",
+        platforms=[{"platform": "twitter", "accountId": "a1"}],
+        thread_items=[
+            ThreadItem(content="First"),
+            ThreadItem(content="Second"),
+        ],
+    )
+    assert "error" in result
+    assert "mutually exclusive" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_posts_create_thread_rejects_media_items():
+    """Threads with top-level media_items return an error."""
+    result = await posts_create(
+        platforms=[{"platform": "twitter", "accountId": "a1"}],
+        media_items=[MediaItem(url="https://img.test/1.jpg", type="image")],
+        thread_items=[
+            ThreadItem(content="First"),
+            ThreadItem(content="Second"),
+        ],
+    )
+    assert "error" in result
+    assert "mutually exclusive" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_posts_create_thread_rejects_too_few_items():
+    """Single-item thread_items returns an error (min 2 required)."""
+    result = await posts_create(
+        platforms=[{"platform": "twitter", "accountId": "a1"}],
+        thread_items=[ThreadItem(content="Only one")],
+    )
+    assert "error" in result
+    assert "at least 2" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_posts_create_thread_rejects_too_many_items():
+    """More than 25 thread_items returns an error."""
+    result = await posts_create(
+        platforms=[{"platform": "twitter", "accountId": "a1"}],
+        thread_items=[ThreadItem(content=f"Item {i}") for i in range(26)],
+    )
+    assert "error" in result
+    assert "25" in result["error"]
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_create_thread_cross_post():
+    """Thread cross-posted to both Twitter and Bluesky."""
+    respx.post(f"{API_BASE}/v1/posts").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post_cross", "status": "published"}
+        })
+    )
+    result = await posts_create(
+        platforms=[
+            {"platform": "twitter", "accountId": "a1"},
+            {"platform": "bluesky", "accountId": "b1"},
+        ],
+        publish_now=True,
+        thread_items=[
+            ThreadItem(content="Thread post 1"),
+            ThreadItem(content="Thread post 2"),
+        ],
+    )
+    req = respx.calls.last.request
+    body = json.loads(req.content)
+    for p in body["platforms"]:
+        assert "threadItems" in p["platformSpecificData"]
+        assert len(p["platformSpecificData"]["threadItems"]) == 2
