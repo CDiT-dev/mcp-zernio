@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.1] - 2026-04-11
+
+- feat: add thread_items support for Twitter/X and Bluesky (CDI-968)
+
+
 ## [0.3.0] - 2026-04-11
 
 ### Added
