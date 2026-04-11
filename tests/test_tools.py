@@ -10,7 +10,7 @@ import respx
 
 from zernio_mcp.tools.accounts import accounts_list, accounts_health
 from zernio_mcp.tools.profiles import profiles_list
-from zernio_mcp.tools.posts import posts_create, posts_get, posts_list, posts_delete, posts_unpublish, posts_retry, MediaItem, ThreadItem
+from zernio_mcp.tools.posts import posts_create, posts_get, posts_list, posts_delete, posts_unpublish, posts_update, posts_retry, MediaItem, ThreadItem
 from zernio_mcp.tools.media import media_upload, media_get_upload_link, media_check_upload
 from zernio_mcp.tools.analytics import analytics_posts, analytics_insights
 from zernio_mcp.tools.queue import queue_preview
@@ -154,9 +154,11 @@ async def test_posts_list_caps_limit():
 @respx.mock
 @pytest.mark.asyncio
 async def test_posts_delete_rejects_published():
-    """API error on published post redirects to posts_unpublish."""
-    respx.delete(f"{API_BASE}/v1/posts/post1").mock(
-        return_value=httpx.Response(409, json={"error": "Cannot delete published post"})
+    """Pre-check catches published status and redirects to posts_unpublish."""
+    respx.get(f"{API_BASE}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post1", "status": "published"}
+        })
     )
     result = await posts_delete("post1")
     assert "error" in result
@@ -166,6 +168,11 @@ async def test_posts_delete_rejects_published():
 @respx.mock
 @pytest.mark.asyncio
 async def test_posts_delete_allows_draft():
+    respx.get(f"{API_BASE}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post1", "status": "draft"}
+        })
+    )
     respx.delete(f"{API_BASE}/v1/posts/post1").mock(
         return_value=httpx.Response(200, json={"deleted": True})
     )
@@ -175,14 +182,74 @@ async def test_posts_delete_allows_draft():
 
 @respx.mock
 @pytest.mark.asyncio
+async def test_posts_delete_not_found():
+    """Deleting a non-existent post returns a clear error."""
+    respx.get(f"{API_BASE}/v1/posts/post_gone").mock(
+        return_value=httpx.Response(404, json={"error": "Post not found"})
+    )
+    result = await posts_delete("post_gone")
+    assert "error" in result
+    assert "not found" in result["error"]
+
+
+@respx.mock
+@pytest.mark.asyncio
 async def test_posts_unpublish_rejects_draft():
-    """API error on draft post redirects to posts_delete."""
-    respx.post(f"{API_BASE}/v1/posts/post1/unpublish").mock(
-        return_value=httpx.Response(422, json={"error": "Cannot unpublish draft post"})
+    """Pre-check catches draft status and redirects to posts_delete."""
+    respx.get(f"{API_BASE}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post1", "status": "draft"}
+        })
     )
     result = await posts_unpublish("post1")
     assert "error" in result
     assert "posts_delete" in result["error"]
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_unpublish_rejects_scheduled():
+    """Pre-check catches scheduled status and redirects to posts_delete."""
+    respx.get(f"{API_BASE}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post1", "status": "scheduled"}
+        })
+    )
+    result = await posts_unpublish("post1")
+    assert "error" in result
+    assert "posts_delete" in result["error"]
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_unpublish_rejects_failed():
+    """Pre-check catches failed status and suggests retry or delete."""
+    respx.get(f"{API_BASE}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post1", "status": "failed"}
+        })
+    )
+    result = await posts_unpublish("post1")
+    assert "error" in result
+    assert "posts_retry" in result["error"] or "posts_delete" in result["error"]
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_unpublish_allows_published():
+    """Published post can be unpublished."""
+    respx.get(f"{API_BASE}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post1", "status": "published"}
+        })
+    )
+    respx.post(f"{API_BASE}/v1/posts/post1/unpublish").mock(
+        return_value=httpx.Response(200, json={
+            "post": {"_id": "post1", "status": "unpublished"}
+        })
+    )
+    result = await posts_unpublish("post1")
+    assert result["post"]["status"] == "unpublished"
 
 
 @respx.mock
