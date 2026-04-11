@@ -186,10 +186,15 @@ async def posts_list(
 async def posts_delete(post_id: str) -> dict:
     """[social] Delete a draft or scheduled post. For published posts, use posts_unpublish."""
     try:
+        # Pre-check: the API returns inconsistent errors for wrong-status deletes
+        post = await client().get(f"/v1/posts/{post_id}")
+        status = post.get("post", {}).get("status", "")
+        if status == "published":
+            return error("Cannot delete a published post. Use posts_unpublish instead.")
         return await client().delete(f"/v1/posts/{post_id}")
     except ZernioAPIError as e:
-        if e.status_code in (409, 422) or "published" in e.message.lower():
-            return error("Cannot delete a published post. Use posts_unpublish instead.")
+        if e.status_code == 404:
+            return error(f"Post {post_id} not found.")
         return error(e.message)
 
 
@@ -197,10 +202,17 @@ async def posts_delete(post_id: str) -> dict:
 async def posts_unpublish(post_id: str) -> dict:
     """[social] Remove a published post from the platform. For drafts, use posts_delete."""
     try:
+        # Pre-check: the API returns 500 instead of a clear error for non-published posts
+        post = await client().get(f"/v1/posts/{post_id}")
+        status = post.get("post", {}).get("status", "")
+        if status in ("draft", "scheduled"):
+            return error(f"Cannot unpublish a {status} post. Use posts_delete instead.")
+        if status == "failed":
+            return error("Cannot unpublish a failed post. Use posts_retry or posts_delete instead.")
         return await client().post(f"/v1/posts/{post_id}/unpublish")
     except ZernioAPIError as e:
-        if e.status_code in (409, 422) or "draft" in e.message.lower() or "scheduled" in e.message.lower():
-            return error("Cannot unpublish a draft or scheduled post. Use posts_delete instead.")
+        if e.status_code == 404:
+            return error(f"Post {post_id} not found.")
         return error(e.message)
 
 
