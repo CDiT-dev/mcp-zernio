@@ -696,9 +696,24 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 .back-btn svg { width: 20px; height: 20px; }
 
 /* ================================================================
-   Messages
+   Conversation Detail + Messages
    ================================================================ */
-.messages-area {
+.conv-detail {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.conv-detail-loading {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 24px;
+}
+
+.message-list, .messages-area {
   flex: 1;
   padding: 24px;
   overflow-y: auto;
