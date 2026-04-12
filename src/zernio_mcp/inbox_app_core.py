@@ -333,6 +333,12 @@ INBOX_JS_CORE = """\
   };
 
   window.navigate = navigate;
+  window.__inboxState = state;
+  window.__inboxRender = function() { render(); };
+  window.__inboxLoadStream = function(f) { loadStream(f || state.filters); };
+  window.escapeHtml = escapeHtml;
+  window.ICONS = ICONS;
+  window.platformLabel = platformLabel;
 
   window.toggleDarkMode = function() {
     state.darkMode = !state.darkMode;
