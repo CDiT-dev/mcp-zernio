@@ -19,5 +19,10 @@ class Settings(BaseSettings):
     # Public URL (used in OAuth metadata — must be the external URL, not 0.0.0.0)
     public_url: str = "https://mcp-zernio.cdit-dev.de"
 
+    # Inbox auth
+    inbox_passphrase: str = ""  # Simple login passphrase for /inbox
+    resend_api_key: str = ""    # Resend API key (magic links disabled if empty)
+    inbox_email: str = ""       # Email address for magic link delivery
+
 
 settings = Settings()  # type: ignore[call-arg]

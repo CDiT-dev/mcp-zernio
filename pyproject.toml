@@ -8,6 +8,7 @@ dependencies = [
     "fastmcp>=3.2.2",
     "httpx>=0.28.1",
     "pydantic-settings>=2.13.1",
+    "resend>=2.0.0",
 ]
 
 [project.scripts]
