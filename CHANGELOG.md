@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.3] - 2026-04-12
+
+- docs: clarify that Threads (Meta) does not support thread_items
+
+
 ## [0.3.2] - 2026-04-11
 
 - fix: pre-check post status in delete/unpublish to avoid Zernio API 500s
