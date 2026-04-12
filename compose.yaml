@@ -11,6 +11,9 @@ services:
       - HOST=0.0.0.0
       - PORT=8717
       - FASTMCP_HOME=/data/fastmcp
+      - INBOX_PASSPHRASE=${INBOX_PASSPHRASE:-}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - INBOX_EMAIL=${INBOX_EMAIL:-}
     volumes:
       - fastmcp-data:/data/fastmcp
 
