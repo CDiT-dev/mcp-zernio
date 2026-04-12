@@ -498,19 +498,61 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
                 client.get(f"/v1/inbox/conversations/{conv_id}/messages", **params),
             )
 
-            sid = _get_session_id(request)
-            response = JSONResponse(
-                {
-                    "conversation": conversation,
-                    "messages": (
-                        messages
-                        if isinstance(messages, list)
-                        else messages.get("data")
-                        or messages.get("messages")
-                        or []
-                    ),
-                }
+            # Normalize conversation data to match JS expectations
+            conv_data = conversation.get("data") or conversation
+            conv_name = (
+                conv_data.get("participantName")
+                or conv_data.get("senderName")
+                or "Unknown"
             )
+            conv_username = (
+                conv_data.get("participantUsername")
+                or conv_data.get("accountUsername")
+                or ""
+            )
+            conv_platform = conv_data.get("platform", "")
+            conv_url = conv_data.get("url") or conv_data.get("platformUrl") or ""
+            normalized_conv = {
+                "id": conv_data.get("id", conv_id),
+                "type": "dm",
+                "platform": conv_platform,
+                "participant": {
+                    "name": conv_name,
+                    "username": conv_username,
+                    "initials": _make_initials(conv_name),
+                },
+                "accountId": conv_data.get("accountId", account_id),
+                "platformUrl": conv_url,
+                "replyAs": {"username": conv_data.get("accountUsername", "")},
+                "status": conv_data.get("status", ""),
+            }
+
+            # Normalize messages
+            raw_msgs = (
+                messages
+                if isinstance(messages, list)
+                else messages.get("data")
+                or messages.get("messages")
+                or []
+            )
+            normalized_msgs = []
+            for msg in raw_msgs:
+                direction = msg.get("direction", "")
+                sender = "me" if direction == "outgoing" else "them"
+                normalized_msgs.append({
+                    "id": msg.get("id", ""),
+                    "content": msg.get("message") or msg.get("text") or msg.get("content") or "",
+                    "sender": sender,
+                    "timestamp": msg.get("createdAt") or msg.get("timestamp") or "",
+                    "status": "sent",
+                    "attachments": msg.get("attachments") or [],
+                })
+
+            sid = _get_session_id(request)
+            response = JSONResponse({
+                "conversation": normalized_conv,
+                "messages": normalized_msgs,
+            })
             if sid:
                 _set_session_cookie(response, sid)
             return response
