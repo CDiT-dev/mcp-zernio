@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.4] - 2026-04-12
+
+- feat: universal inbox UI — server proxy + SPA frontend
+
+
 ## [0.3.3] - 2026-04-12
 
 - docs: clarify that Threads (Meta) does not support thread_items
