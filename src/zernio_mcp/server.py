@@ -52,6 +52,10 @@ from zernio_mcp.upload import register_upload_routes  # noqa: E402
 
 register_upload_routes(mcp)
 
+from zernio_mcp.inbox import register_inbox_routes  # noqa: E402
+
+register_inbox_routes(mcp)
+
 
 def main() -> None:
     if settings.mcp_transport == "http":
