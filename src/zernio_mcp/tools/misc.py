@@ -52,3 +52,22 @@ async def account_groups_delete(group_id: str) -> dict:
         return await client().delete(f"/v1/account-groups/{group_id}")
     except ZernioAPIError as e:
         return error(e.message)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=False))
+async def inbox_get_link() -> dict:
+    """[social] Get a link to open the universal inbox in your browser.
+
+    Returns a URL that opens a unified view of all DMs, comments, and reviews
+    across platforms. The link is valid for 10 minutes.
+
+    Use this when the user wants to check their inbox, respond to messages,
+    or manage comments visually rather than through tool calls.
+    """
+    from zernio_mcp.inbox import create_inbox_token
+    from zernio_mcp.config import settings
+
+    token = create_inbox_token()
+    base = settings.public_url.rstrip("/")
+    url = f"{base}/inbox?token={token}"
+    return {"inboxUrl": url, "expiresIn": "10 minutes"}
