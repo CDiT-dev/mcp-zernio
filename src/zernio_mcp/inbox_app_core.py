@@ -142,8 +142,10 @@ INBOX_JS_CORE = """\
         return resp.json();
       });
     },
-    conversation: function(id) {
-      return fetch('/inbox/api/conversation/' + encodeURIComponent(id)).then(function(resp) {
+    conversation: function(id, accountId) {
+      var url = '/inbox/api/conversations/' + encodeURIComponent(id);
+      if (accountId) url += '?accountId=' + encodeURIComponent(accountId);
+      return fetch(url).then(function(resp) {
         if (!resp.ok) throw new Error('Failed to load conversation');
         return resp.json();
       });
@@ -236,7 +238,9 @@ INBOX_JS_CORE = """\
     state.loading = true;
     state.error = null;
     render();
-    api.conversation(id).then(function(data) {
+    var item = state.items.find(function(i) { return i.id === id; });
+    var accountId = item ? item.accountId : '';
+    api.conversation(id, accountId).then(function(data) {
       state.conversation = data.conversation;
       state.messages = data.messages || [];
       state.loading = false;

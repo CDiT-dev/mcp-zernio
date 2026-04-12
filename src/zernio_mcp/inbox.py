@@ -486,12 +486,16 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
             return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
         conv_id = request.path_params["conv_id"]
+        account_id = request.query_params.get("accountId", "")
         client = ZernioClient(http_client=get_shared_client())
 
         try:
+            params: dict[str, Any] = {}
+            if account_id:
+                params["accountId"] = account_id
             conversation, messages = await asyncio.gather(
-                client.get(f"/v1/inbox/conversations/{conv_id}"),
-                client.get(f"/v1/inbox/conversations/{conv_id}/messages"),
+                client.get(f"/v1/inbox/conversations/{conv_id}", **params),
+                client.get(f"/v1/inbox/conversations/{conv_id}/messages", **params),
             )
 
             sid = _get_session_id(request)
