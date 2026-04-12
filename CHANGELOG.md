@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.10] - 2026-04-12
+
+- fix: pass accountId to conversation API + fix endpoint URL path
+
+
 ## [0.3.9] - 2026-04-12
 
 - fix: conversation normalizer field mapping + desktop layout CSS
