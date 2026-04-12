@@ -277,6 +277,35 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
         _set_session_cookie(response, sid)
         return response
 
+    # -- GET /inbox/conv/{id}, /inbox/archived, /inbox/sent — SPA sub-routes --
+
+    @mcp.custom_route("/inbox/conv/{conv_id:path}", methods=["GET"])
+    async def inbox_conv_page(request: Request) -> HTMLResponse:
+        if _validate_session(request):
+            return HTMLResponse(_INBOX_HTML)
+        return HTMLResponse(
+            '<meta http-equiv="refresh" content="0;url=/inbox">',
+            status_code=302,
+        )
+
+    @mcp.custom_route("/inbox/archived", methods=["GET"])
+    async def inbox_archived_page(request: Request) -> HTMLResponse:
+        if _validate_session(request):
+            return HTMLResponse(_INBOX_HTML)
+        return HTMLResponse(
+            '<meta http-equiv="refresh" content="0;url=/inbox">',
+            status_code=302,
+        )
+
+    @mcp.custom_route("/inbox/sent", methods=["GET"])
+    async def inbox_sent_page(request: Request) -> HTMLResponse:
+        if _validate_session(request):
+            return HTMLResponse(_INBOX_HTML)
+        return HTMLResponse(
+            '<meta http-equiv="refresh" content="0;url=/inbox">',
+            status_code=302,
+        )
+
     # -- POST /inbox/auth — passphrase login ---------------------------------
 
     @mcp.custom_route("/inbox/auth", methods=["POST"])
