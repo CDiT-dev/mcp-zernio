@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.8] - 2026-04-12
+
+- fix: add SPA catch-all routes for /inbox/conv/*, /archived, /sent
+
+
 ## [0.3.7] - 2026-04-12
 
 - fix: add missing settings import to inbox.py
