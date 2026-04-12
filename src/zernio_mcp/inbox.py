@@ -21,6 +21,7 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, Response
 
 from zernio_mcp.client import ZernioAPIError, ZernioClient, get_shared_client
+from zernio_mcp.config import settings
 
 # ---------------------------------------------------------------------------
 # Auth: pending tokens (10 min) and active sessions (24h)
