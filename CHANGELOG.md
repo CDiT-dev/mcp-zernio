@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.12] - 2026-04-12
+
+- fix: expose core state/render to interactions JS, fix dark mode toggle
+
+
 ## [0.3.11] - 2026-04-12
 
 - fix: normalize conversation + message data in proxy
