@@ -1,5 +1,250 @@
 """HTML shell + CSS for the universal inbox SPA. CDiT Design System 2026."""
 
+INBOX_LOGIN_HTML = """\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sign In — Zernio Inbox</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: oklch(0.9923 0.0104 91.4994);
+  --fg: oklch(0.1759 0.0275 161.2531);
+  --card: oklch(1.0 0 0);
+  --primary: oklch(0.5687 0.1498 151.938);
+  --primary-fg: oklch(1.0 0 0);
+  --destructive: oklch(0.5799 0.2380 29.2339);
+  --muted-fg: oklch(0.4500 0.0200 161.0);
+  --border: oklch(0 0 0);
+  --shadow: 4px 4px 0px 0px oklch(0 0 0);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  font-family: 'Montserrat', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100dvh;
+}
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 20px;
+}
+.login-card {
+  background: var(--card);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 40px 32px;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-icon span {
+  font-size: 18px; font-weight: 700; color: var(--primary-fg);
+}
+.logo-text {
+  font-size: 22px; font-weight: 600;
+}
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.login-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  background: var(--card);
+}
+.login-input:focus {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+.btn-login {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: var(--primary-fg);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.btn-login:active { transform: translate(2px, 2px); box-shadow: none; }
+.btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
+.error-msg {
+  color: var(--destructive);
+  font-size: 13px;
+  font-weight: 500;
+  display: none;
+  text-align: center;
+}
+.error-msg.visible { display: block; }
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  color: var(--muted-fg);
+  font-size: 13px;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  opacity: 0.15;
+}
+.btn-magic {
+  width: 100%;
+  padding: 12px;
+  background: var(--card);
+  color: var(--fg);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.btn-magic:active { transform: translate(2px, 2px); box-shadow: none; }
+.btn-magic:disabled { opacity: 0.5; cursor: not-allowed; }
+.success-msg {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 500;
+  display: none;
+  text-align: center;
+}
+.success-msg.visible { display: block; }
+.magic-section { display: none; width: 100%; }
+.magic-section.enabled { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.footer {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--muted-fg);
+}
+</style>
+</head>
+<body>
+<div class="login-card">
+  <div class="logo-row">
+    <div class="logo-icon"><span>Z</span></div>
+    <span class="logo-text">Zernio Inbox</span>
+  </div>
+
+  <form class="login-form" id="loginForm">
+    <input type="password" class="login-input" id="passphrase" placeholder="Enter passphrase" autocomplete="current-password" autofocus>
+    <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
+    <div class="error-msg" id="errorMsg"></div>
+  </form>
+
+  <div class="magic-section" id="magicSection">
+    <div class="divider">or</div>
+    <button type="button" class="btn-magic" id="magicBtn">Email me a magic link</button>
+    <div class="success-msg" id="successMsg"></div>
+    <span class="footer">__MASKED_EMAIL__</span>
+  </div>
+</div>
+
+<script>
+const magicEnabled = __MAGIC_ENABLED__;
+
+if (magicEnabled) {
+  document.getElementById('magicSection').classList.add('enabled');
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('errorMsg');
+  const input = document.getElementById('passphrase');
+  btn.disabled = true;
+  errEl.classList.remove('visible');
+
+  try {
+    const resp = await fetch('/inbox/auth', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({passphrase: input.value})
+    });
+    if (resp.ok) {
+      window.location.href = '/inbox';
+    } else {
+      const data = await resp.json();
+      errEl.textContent = data.error || 'Invalid passphrase';
+      errEl.classList.add('visible');
+      input.value = '';
+      input.focus();
+    }
+  } catch (err) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.classList.add('visible');
+  }
+  btn.disabled = false;
+});
+
+if (magicEnabled) {
+  document.getElementById('magicBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('magicBtn');
+    const successEl = document.getElementById('successMsg');
+    const errEl = document.getElementById('errorMsg');
+    btn.disabled = true;
+    errEl.classList.remove('visible');
+    successEl.classList.remove('visible');
+
+    try {
+      const resp = await fetch('/inbox/auth/magic', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: '{}'
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        successEl.textContent = data.message || 'Magic link sent! Check your email.';
+        successEl.classList.add('visible');
+        btn.textContent = 'Link sent!';
+      } else {
+        errEl.textContent = data.error || 'Failed to send link';
+        errEl.classList.add('visible');
+        btn.disabled = false;
+      }
+    } catch (err) {
+      errEl.textContent = 'Connection error. Please try again.';
+      errEl.classList.add('visible');
+      btn.disabled = false;
+    }
+  });
+}
+</script>
+</body>
+</html>
+"""
+
 INBOX_HTML = """\
 <!DOCTYPE html>
 <html lang="en">

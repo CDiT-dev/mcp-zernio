@@ -30,7 +30,7 @@ _inbox_tokens: dict[str, float] = {}
 _inbox_sessions: dict[str, float] = {}
 
 _TOKEN_TTL = 600  # 10 minutes
-_SESSION_TTL = 86400  # 24 hours
+_SESSION_TTL = 2592000  # 30 days
 
 
 def _cleanup_expired() -> None:
@@ -69,7 +69,7 @@ def _set_session_cookie(response: JSONResponse | HTMLResponse, sid: str) -> None
         "inbox_session",
         sid,
         httponly=True,
-        max_age=86400,
+        max_age=2592000,
         samesite="lax",
     )
 
@@ -236,7 +236,7 @@ def _normalize_review(item: dict[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 # HTML/CSS/JS loaded from separate modules
-from zernio_mcp.inbox_html import INBOX_HTML as _INBOX_HTML
+from zernio_mcp.inbox_html import INBOX_HTML as _INBOX_HTML, INBOX_LOGIN_HTML as _INBOX_LOGIN_HTML
 
 
 # ---------------------------------------------------------------------------
@@ -256,11 +256,18 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
             # If they already have a valid session, let them through
             if _validate_session(request):
                 return HTMLResponse(_INBOX_HTML)
-            return HTMLResponse(
-                "<h1>Invalid or expired inbox link</h1>"
-                "<p>Please request a new inbox link from Claude.</p>",
-                status_code=403,
+            # Show login page
+            has_magic = bool(settings.resend_api_key and settings.inbox_email)
+            masked_email = ""
+            if has_magic and settings.inbox_email:
+                parts = settings.inbox_email.split("@")
+                masked_email = parts[0][:2] + "***@" + parts[1] if len(parts) == 2 else ""
+            login_html = _INBOX_LOGIN_HTML.replace(
+                "__MAGIC_ENABLED__", "true" if has_magic else "false"
+            ).replace(
+                "__MASKED_EMAIL__", masked_email
             )
+            return HTMLResponse(login_html)
         # Consume the token and create a session
         _inbox_tokens.pop(token, None)
         sid = secrets.token_urlsafe(32)
@@ -268,6 +275,60 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
         response = HTMLResponse(_INBOX_HTML)
         _set_session_cookie(response, sid)
         return response
+
+    # -- POST /inbox/auth — passphrase login ---------------------------------
+
+    @mcp.custom_route("/inbox/auth", methods=["POST"])
+    async def inbox_auth(request: Request) -> JSONResponse:
+        if not settings.inbox_passphrase:
+            return JSONResponse({"error": "Login not configured"}, status_code=503)
+
+        body = await request.json()
+        passphrase = body.get("passphrase", "")
+
+        if not secrets.compare_digest(passphrase, settings.inbox_passphrase):
+            return JSONResponse({"error": "Invalid passphrase"}, status_code=401)
+
+        sid = secrets.token_urlsafe(32)
+        _inbox_sessions[sid] = time.monotonic()
+        response = JSONResponse({"success": True})
+        _set_session_cookie(response, sid)
+        return response
+
+    # -- POST /inbox/auth/magic — send magic link via Resend ----------------
+
+    @mcp.custom_route("/inbox/auth/magic", methods=["POST"])
+    async def inbox_auth_magic(request: Request) -> JSONResponse:
+        if not settings.resend_api_key or not settings.inbox_email:
+            return JSONResponse({"error": "Magic links not configured"}, status_code=503)
+
+        token = create_inbox_token()
+        link = f"{settings.public_url.rstrip('/')}/inbox?token={token}"
+
+        try:
+            import resend
+            resend.api_key = settings.resend_api_key
+            resend.Emails.send({
+                "from": "Zernio Inbox <inbox@cdit-dev.de>",
+                "to": settings.inbox_email,
+                "subject": "Your Zernio Inbox link",
+                "html": (
+                    '<div style="font-family:sans-serif;max-width:420px;margin:40px auto;text-align:center">'
+                    '<h2 style="margin-bottom:8px">Zernio Inbox</h2>'
+                    '<p style="color:#666;margin-bottom:24px">Click below to open your inbox. This link expires in 10 minutes.</p>'
+                    f'<a href="{link}" style="display:inline-block;padding:12px 32px;background:#2a9d4e;color:white;'
+                    'text-decoration:none;font-weight:600;border:2px solid #000;box-shadow:4px 4px 0px 0px #000">'
+                    'Open Inbox</a>'
+                    '<p style="color:#999;font-size:12px;margin-top:24px">If you didn\'t request this, you can safely ignore it.</p>'
+                    '</div>'
+                ),
+            })
+        except Exception as e:
+            return JSONResponse({"error": f"Failed to send email: {type(e).__name__}"}, status_code=500)
+
+        parts = settings.inbox_email.split("@")
+        masked = parts[0][:2] + "***@" + parts[1] if len(parts) == 2 else "your email"
+        return JSONResponse({"success": True, "message": f"Magic link sent to {masked}"})
 
     # -- GET /inbox/app.js — serve the SPA JavaScript ----------------------
 
