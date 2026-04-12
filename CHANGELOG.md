@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.5] - 2026-04-12
+
+- feat: inbox login page with passphrase + Resend magic links
+
+
 ## [0.3.4] - 2026-04-12
 
 - feat: universal inbox UI — server proxy + SPA frontend
