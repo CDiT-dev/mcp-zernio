@@ -54,6 +54,8 @@ async def posts_create(
     Pass content with your text. Optionally attach media_items.
 
     ## Thread (Twitter/X and Bluesky only)
+    Note: the "Threads" platform (Meta) does NOT support native threading
+    via the API despite its name. Only twitter and bluesky support threads.
     Pass thread_items instead of content. thread_items is mutually exclusive
     with top-level content and media_items.
 
