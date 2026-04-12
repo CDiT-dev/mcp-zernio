@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.9] - 2026-04-12
+
+- fix: conversation normalizer field mapping + desktop layout CSS
+
+
 ## [0.3.8] - 2026-04-12
 
 - fix: add SPA catch-all routes for /inbox/conv/*, /archived, /sent
