@@ -2,6 +2,11 @@ INBOX_JS_INTERACTIONS = """\
 (function() {
   'use strict';
 
+  // Shared references from core JS
+  var state = window.__inboxState;
+  var render = window.__inboxRender;
+  var ICONS = window.ICONS || {};
+
   // =========================================================================
   // 1. Context Menu (Desktop Right-Click)
   // =========================================================================
@@ -388,24 +393,8 @@ INBOX_JS_INTERACTIONS = """\
   window.showKeyboardHelp = showKeyboardHelp;
 
   // =========================================================================
-  // 6. Dark Mode Toggle
+  // 6. Dark Mode Toggle — defined in core JS, not duplicated here
   // =========================================================================
-
-  window.toggleDarkMode = function() {
-    state.darkMode = !state.darkMode;
-    localStorage.setItem('inbox-dark', state.darkMode);
-    document.documentElement.classList.toggle('dark', state.darkMode);
-    render();
-  };
-
-  // Listen for system preference changes
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (!localStorage.getItem('inbox-dark')) { // Only auto-switch if user hasn't manually set
-      state.darkMode = e.matches;
-      document.documentElement.classList.toggle('dark', state.darkMode);
-      render();
-    }
-  });
 
   // =========================================================================
   // 7. Message Hover Actions (Desktop)
