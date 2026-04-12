@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.6] - 2026-04-12
+
+- chore: pass inbox auth env vars through compose.yaml
+
+
 ## [0.3.5] - 2026-04-12
 
 - feat: inbox login page with passphrase + Resend magic links
