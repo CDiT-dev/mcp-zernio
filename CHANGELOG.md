@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.11] - 2026-04-12
+
+- fix: normalize conversation + message data in proxy
+
+
 ## [0.3.10] - 2026-04-12
 
 - fix: pass accountId to conversation API + fix endpoint URL path
