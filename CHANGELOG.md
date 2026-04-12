@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.7] - 2026-04-12
+
+- fix: add missing settings import to inbox.py
+
+
 ## [0.3.6] - 2026-04-12
 
 - chore: pass inbox auth env vars through compose.yaml
