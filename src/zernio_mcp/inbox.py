@@ -97,10 +97,36 @@ def _make_initials(name: str) -> str:
 
 def _normalize_conversation(item: dict[str, Any]) -> dict[str, Any]:
     """Normalize a conversation (DM) item to the unified stream shape."""
+    # Zernio uses different field names depending on platform
     participant = item.get("participant") or item.get("contact") or {}
-    name = participant.get("name") or participant.get("displayName") or "Unknown"
-    username = participant.get("username") or participant.get("handle") or ""
-    last_message = item.get("lastMessage") or item.get("preview") or ""
+    name = (
+        participant.get("name")
+        or participant.get("displayName")
+        or item.get("participantName")
+        or item.get("senderName")
+        or "Unknown"
+    )
+    username = (
+        participant.get("username")
+        or participant.get("handle")
+        or item.get("participantUsername")
+        or item.get("accountUsername")
+        or ""
+    )
+    last_message = item.get("lastMessage") or item.get("preview") or item.get("snippet") or ""
+    timestamp = (
+        item.get("updatedAt")
+        or item.get("createdAt")
+        or item.get("updatedTime")
+        or item.get("lastMessageAt")
+        or ""
+    )
+    _excluded = {
+        "id", "platform", "participant", "contact", "lastMessage", "preview",
+        "snippet", "updatedAt", "createdAt", "updatedTime", "lastMessageAt",
+        "unread", "hidden", "accountId", "participantName", "senderName",
+        "participantUsername", "accountUsername",
+    }
     return {
         "id": item.get("id", ""),
         "type": "dm",
@@ -111,28 +137,11 @@ def _normalize_conversation(item: dict[str, Any]) -> dict[str, Any]:
             "initials": _make_initials(name),
         },
         "preview": str(last_message)[:100],
-        "timestamp": item.get("updatedAt") or item.get("createdAt") or "",
+        "timestamp": timestamp,
         "unread": item.get("unread", False),
         "hidden": item.get("hidden", False),
         "accountId": item.get("accountId", ""),
-        "platformData": {
-            k: v
-            for k, v in item.items()
-            if k
-            not in {
-                "id",
-                "platform",
-                "participant",
-                "contact",
-                "lastMessage",
-                "preview",
-                "updatedAt",
-                "createdAt",
-                "unread",
-                "hidden",
-                "accountId",
-            }
-        },
+        "platformData": {k: v for k, v in item.items() if k not in _excluded},
     }
 
 

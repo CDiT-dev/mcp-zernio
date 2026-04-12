@@ -341,6 +341,13 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   overflow: hidden;
 }
 
+.desktop-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 .sidebar {
   width: 260px;
   flex-shrink: 0;
@@ -353,7 +360,7 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   overflow-y: auto;
 }
 
-.conv-list-panel {
+.conv-list-panel, .conv-list {
   width: 380px;
   flex-shrink: 0;
   display: flex;
