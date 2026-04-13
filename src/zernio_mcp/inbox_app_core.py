@@ -627,10 +627,36 @@ INBOX_JS_CORE = """\
         else if (msg.status === 'failed') statusText = ' &middot; Failed';
         else statusText = ' &middot; Sent';
       }
+      var bubbleContent = '';
+      // Attachments
+      if (msg.attachments && msg.attachments.length > 0) {
+        msg.attachments.forEach(function(att) {
+          var attType = att.type || 'file';
+          var attTitle = (att.payload && att.payload.title) ? att.payload.title : '';
+          if (attType === 'image' || attType === 'photo') {
+            bubbleContent += '<img src="' + escapeHtml(att.url) + '" alt="Image" class="msg-attachment-img" loading="lazy">';
+          } else if (attType === 'ig_reel' || attType === 'video' || attType === 'reel') {
+            var label = attType === 'ig_reel' ? 'Reel' : 'Video';
+            bubbleContent += '<div class="msg-attachment-media">' +
+              '<span class="att-type-badge">' + label + '</span>' +
+              (attTitle ? '<p class="att-title">' + escapeHtml(attTitle.slice(0, 120)) + (attTitle.length > 120 ? '...' : '') + '</p>' : '') +
+            '</div>';
+          } else {
+            bubbleContent += '<div class="msg-attachment-media"><span class="att-type-badge">' + escapeHtml(attType) + '</span></div>';
+          }
+        });
+      }
+      // Text content
+      if (msg.content) {
+        bubbleContent += '<p>' + escapeHtml(msg.content) + '</p>';
+      }
+      // Fallback if completely empty
+      if (!bubbleContent) {
+        bubbleContent = '<p class="msg-empty">[Message]</p>';
+      }
+
       html += '<div class="message ' + msgClass + (msg.status === 'failed' ? ' failed' : '') + '">' +
-        '<div class="message-bubble">' +
-          '<p>' + escapeHtml(msg.content) + '</p>' +
-        '</div>' +
+        '<div class="message-bubble">' + bubbleContent + '</div>' +
         '<span class="message-time">' + formatTime(msg.timestamp) + statusText + '</span>' +
       '</div>';
     });
