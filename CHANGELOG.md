@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.23] - 2026-04-13
+
+- fix: use query param for conversation ID (handles at:// URIs)
+
+
 ## [0.3.22] - 2026-04-13
 
 - fix: handle empty response body from Zernio API
