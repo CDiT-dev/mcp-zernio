@@ -506,9 +506,23 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   padding: 16px;
   border-bottom: 2px solid var(--border);
 }
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  color: var(--muted-fg);
+  pointer-events: none;
+}
+.search-icon svg { width: 16px; height: 16px; }
 .search-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px 12px 8px 34px;
   border: 2px solid var(--border);
   background: var(--card);
   font-size: 14px;
