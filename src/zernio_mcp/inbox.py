@@ -293,7 +293,10 @@ def _normalize_review(item: dict[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 # HTML/CSS/JS loaded from separate modules
-from zernio_mcp.inbox_html import INBOX_HTML as _INBOX_HTML, INBOX_LOGIN_HTML as _INBOX_LOGIN_HTML
+from zernio_mcp.inbox_html import INBOX_HTML as _INBOX_HTML_RAW, INBOX_LOGIN_HTML as _INBOX_LOGIN_HTML
+
+# Cache-bust JS URL with startup timestamp so deploys always serve fresh JS
+_INBOX_HTML = _INBOX_HTML_RAW.replace("__CACHE_BUST__", str(int(time.time())))
 
 
 # ---------------------------------------------------------------------------
