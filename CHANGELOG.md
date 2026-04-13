@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.22] - 2026-04-13
+
+- fix: handle empty response body from Zernio API
+
+
 ## [0.3.21] - 2026-04-13
 
 - fix: use {conv_id:path} to handle Bluesky IDs with slashes
