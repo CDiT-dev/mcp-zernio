@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.19] - 2026-04-13
+
+- fix: Open in App links — extract URL from platformData
+
+
 ## [0.3.18] - 2026-04-13
 
 - fix: cache-bust JS via startup timestamp in script src
