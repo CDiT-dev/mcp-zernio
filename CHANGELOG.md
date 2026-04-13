@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.18] - 2026-04-13
+
+- fix: cache-bust JS via startup timestamp in script src
+
+
 ## [0.3.17] - 2026-04-13
 
 - fix: cache-bust JS loading with Date.now() query param
