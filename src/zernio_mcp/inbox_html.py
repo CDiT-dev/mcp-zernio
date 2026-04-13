@@ -419,6 +419,7 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   cursor: pointer;
   transition: background 0.15s ease-out;
 }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 .nav-item:hover { background: var(--muted); }
 .nav-item.active {
   background: var(--primary);
@@ -446,6 +447,25 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   opacity: 0.1;
   margin: 4px 0;
 }
+
+.sidebar-footer {
+  margin-top: 8px;
+  padding: 8px 12px;
+}
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: var(--radius);
+}
+.btn-icon:hover { background: var(--muted); }
+.btn-icon svg { width: 18px; height: 18px; }
 
 .platform-filters {
   display: flex;
