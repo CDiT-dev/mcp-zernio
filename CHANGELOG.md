@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.17] - 2026-04-13
+
+- fix: cache-bust JS loading with Date.now() query param
+
+
 ## [0.3.16] - 2026-04-13
 
 - feat: inline video preview for reel/video attachments
