@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.13] - 2026-04-13
+
+- fix: commit updated uv.lock with resend dependency
+
+
 ## [0.3.12] - 2026-04-12
 
 - fix: expose core state/render to interactions JS, fix dark mode toggle
