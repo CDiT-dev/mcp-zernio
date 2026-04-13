@@ -340,6 +340,21 @@ INBOX_JS_CORE = """\
   window.ICONS = ICONS;
   window.platformLabel = platformLabel;
 
+  function platformName(platform) {
+    var names = { twitter: 'Twitter', instagram: 'Instagram', linkedin: 'LinkedIn', bluesky: 'Bluesky', facebook: 'Facebook', threads: 'Threads', google: 'Google', reddit: 'Reddit', pinterest: 'Pinterest' };
+    return names[platform] || platform;
+  }
+  window.platformName = platformName;
+
+  function openInApp(item) {
+    var pd = item.platformData || {};
+    var url = pd.permalink || pd.url || pd.platformPostUrl || item.platformUrl || '';
+    if (url) {
+      window.open(url, '_blank');
+    }
+  }
+  window.openInApp = openInApp;
+
   window.toggleDarkMode = function() {
     state.darkMode = !state.darkMode;
     localStorage.setItem('inbox-dark', state.darkMode);
@@ -589,8 +604,11 @@ INBOX_JS_CORE = """\
     var initials = (conv.participant && conv.participant.initials) ? escapeHtml(conv.participant.initials) : '?';
     var name = (conv.participant && conv.participant.name) ? escapeHtml(conv.participant.name) : 'Unknown';
     var username = (conv.participant && conv.participant.username) ? escapeHtml(conv.participant.username) : '';
-    var platformName = escapeHtml(platformLabel(conv.platform));
-    var platformUrl = conv.platformUrl ? escapeHtml(conv.platformUrl) : '#';
+    var platLabel = escapeHtml(platformLabel(conv.platform));
+    var platFullName = escapeHtml(platformName(conv.platform));
+    var pd = conv.platformData || {};
+    var platformUrl = conv.platformUrl || pd.permalink || pd.url || pd.platformPostUrl || '';
+    platformUrl = platformUrl ? escapeHtml(platformUrl) : '';
     var replyUsername = (conv.replyAs && conv.replyAs.username) ? escapeHtml(conv.replyAs.username) : username;
 
     var html = '<div class="conv-detail">';
@@ -601,13 +619,13 @@ INBOX_JS_CORE = """\
       '<div class="conv-avatar" style="background:' + color + '">' + initials + '</div>' +
       '<div class="conv-detail-info">' +
         '<span class="conv-detail-name">' + name + '</span>' +
-        '<span class="conv-detail-meta">@' + username + ' &middot; ' + platformName + ' ' + escapeHtml(typeLabel(conv.type)) + '</span>' +
+        '<span class="conv-detail-meta">@' + username + ' &middot; ' + platLabel + ' ' + escapeHtml(typeLabel(conv.type)) + '</span>' +
       '</div>' +
       '<div class="conv-detail-actions">' +
         '<button class="btn-outline" onclick="doAction(\\'read\\')">' + ICONS.check + ' <span class="desktop-only">Mark Read</span></button>' +
         '<button class="btn-outline" onclick="doAction(\\'archive\\')">' + ICONS.archive + ' <span class="desktop-only">Archive</span></button>' +
         (conv.platform === 'twitter' ? '<button class="btn-primary" onclick="doAction(\\'follow\\')">' + ICONS.userPlus + ' <span class="desktop-only">Follow</span></button>' : '') +
-        '<a class="btn-outline" href="' + platformUrl + '" target="_blank">' + ICONS.externalLink + ' <span class="desktop-only">Open in ' + platformName + '</span></a>' +
+        (platformUrl ? '<a class="btn-outline" href="' + platformUrl + '" target="_blank">' + ICONS.externalLink + ' <span class="desktop-only">Open in ' + platFullName + '</span></a>' : '') +
       '</div>' +
     '</div>';
 
@@ -688,7 +706,7 @@ INBOX_JS_CORE = """\
         '</button>' +
       '</div>' +
       '<div class="reply-meta">' +
-        '<span>Replying as @' + replyUsername + ' on ' + platformName + '</span>' +
+        '<span>Replying as @' + replyUsername + ' on ' + platFullName + '</span>' +
       '</div>' +
     '</div>';
 
