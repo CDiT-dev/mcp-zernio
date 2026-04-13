@@ -807,11 +807,23 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   border: 1px solid var(--border);
   margin-bottom: 4px;
 }
+.msg-attachment-video {
+  max-width: 100%;
+  max-height: 280px;
+  border: 1px solid var(--border);
+  background: oklch(0 0 0);
+}
 .msg-attachment-media {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 4px 0;
+}
+.att-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--primary);
+  text-decoration: underline;
 }
 .att-type-badge {
   display: inline-block;

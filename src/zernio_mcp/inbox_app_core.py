@@ -633,16 +633,32 @@ INBOX_JS_CORE = """\
         msg.attachments.forEach(function(att) {
           var attType = att.type || 'file';
           var attTitle = (att.payload && att.payload.title) ? att.payload.title : '';
+          var attUrl = att.url || (att.payload && att.payload.url) || '';
           if (attType === 'image' || attType === 'photo') {
-            bubbleContent += '<img src="' + escapeHtml(att.url) + '" alt="Image" class="msg-attachment-img" loading="lazy">';
+            bubbleContent += '<img src="' + escapeHtml(attUrl) + '" alt="Image" class="msg-attachment-img" loading="lazy">';
           } else if (attType === 'ig_reel' || attType === 'video' || attType === 'reel') {
             var label = attType === 'ig_reel' ? 'Reel' : 'Video';
             bubbleContent += '<div class="msg-attachment-media">' +
-              '<span class="att-type-badge">' + label + '</span>' +
-              (attTitle ? '<p class="att-title">' + escapeHtml(attTitle.slice(0, 120)) + (attTitle.length > 120 ? '...' : '') + '</p>' : '') +
+              '<span class="att-type-badge">' + label + '</span>';
+            if (attUrl) {
+              bubbleContent += '<video class="msg-attachment-video" src="' + escapeHtml(attUrl) + '" ' +
+                'controls preload="metadata" playsinline></video>';
+            }
+            if (attTitle) {
+              bubbleContent += '<p class="att-title">' + escapeHtml(attTitle.slice(0, 150)) + (attTitle.length > 150 ? '...' : '') + '</p>';
+            }
+            bubbleContent += '</div>';
+          } else if (attType === 'share' || attType === 'link') {
+            bubbleContent += '<div class="msg-attachment-media">' +
+              '<span class="att-type-badge">Link</span>' +
+              (attTitle ? '<p class="att-title">' + escapeHtml(attTitle.slice(0, 150)) + '</p>' : '') +
+              (attUrl ? '<a href="' + escapeHtml(attUrl) + '" target="_blank" class="att-link">Open link</a>' : '') +
             '</div>';
           } else {
-            bubbleContent += '<div class="msg-attachment-media"><span class="att-type-badge">' + escapeHtml(attType) + '</span></div>';
+            bubbleContent += '<div class="msg-attachment-media">' +
+              '<span class="att-type-badge">' + escapeHtml(attType) + '</span>' +
+              (attTitle ? '<p class="att-title">' + escapeHtml(attTitle.slice(0, 100)) + '</p>' : '') +
+            '</div>';
           }
         });
       }
