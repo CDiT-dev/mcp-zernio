@@ -561,7 +561,13 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
                 or ""
             )
             conv_platform = conv_data.get("platform", "")
-            conv_url = conv_data.get("url") or conv_data.get("platformUrl") or ""
+            conv_url = (
+                conv_data.get("url")
+                or conv_data.get("platformUrl")
+                or conv_data.get("permalink")
+                or conv_data.get("instagramProfile", {}).get("url", "")
+                or ""
+            )
             normalized_conv = {
                 "id": conv_data.get("id", conv_id),
                 "type": "dm",
