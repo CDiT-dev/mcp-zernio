@@ -175,6 +175,8 @@ class ZernioClient:
                         status_code=resp.status_code,
                     )
 
+                if not resp.content:
+                    return {}
                 return resp.json()
 
             except httpx.TimeoutException:
