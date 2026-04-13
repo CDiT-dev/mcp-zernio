@@ -175,9 +175,12 @@ class ZernioClient:
                         status_code=resp.status_code,
                     )
 
-                if not resp.content:
+                if not resp.content or not resp.content.strip():
                     return {}
-                return resp.json()
+                try:
+                    return resp.json()
+                except Exception:
+                    return {}
 
             except httpx.TimeoutException:
                 if attempt < MAX_RETRIES:
