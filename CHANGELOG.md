@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.16] - 2026-04-13
+
+- feat: inline video preview for reel/video attachments
+
+
 ## [0.3.15] - 2026-04-13
 
 - feat: render message attachments (reels, videos, images)
