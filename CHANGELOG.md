@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.14] - 2026-04-13
+
+- fix: comment + review normalizers for Zernio field names
+
+
 ## [0.3.13] - 2026-04-13
 
 - fix: commit updated uv.lock with resend dependency
