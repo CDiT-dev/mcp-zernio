@@ -1424,7 +1424,12 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 </head>
 <body>
 <div id="app"></div>
-<script src="/inbox/app.js"></script>
+<script>
+// Cache-bust: load JS with version hash to avoid stale cache on deploys
+var s = document.createElement('script');
+s.src = '/inbox/app.js?v=' + Date.now();
+document.body.appendChild(s);
+</script>
 </body>
 </html>
 """
