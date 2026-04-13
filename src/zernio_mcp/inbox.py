@@ -147,10 +147,49 @@ def _normalize_conversation(item: dict[str, Any]) -> dict[str, Any]:
 
 def _normalize_comment(item: dict[str, Any]) -> dict[str, Any]:
     """Normalize a comment item to the unified stream shape."""
+    # Zernio returns comment/post data with various field names
     author = item.get("author") or item.get("user") or {}
-    name = author.get("name") or author.get("displayName") or "Unknown"
-    username = author.get("username") or author.get("handle") or ""
-    text = item.get("text") or item.get("message") or item.get("body") or ""
+    name = (
+        author.get("name")
+        or author.get("displayName")
+        or item.get("authorName")
+        or item.get("accountUsername")
+        or item.get("senderName")
+        or "Unknown"
+    )
+    username = (
+        author.get("username")
+        or author.get("handle")
+        or item.get("authorUsername")
+        or item.get("accountUsername")
+        or ""
+    )
+    text = (
+        item.get("text")
+        or item.get("message")
+        or item.get("body")
+        or item.get("content")
+        or ""
+    )
+    timestamp = (
+        item.get("createdAt")
+        or item.get("updatedAt")
+        or item.get("createdTime")
+        or item.get("updatedTime")
+        or ""
+    )
+    comment_count = item.get("commentCount", 0)
+    preview = str(text)[:100]
+    if comment_count:
+        preview = f"[{comment_count} comment{'s' if comment_count != 1 else ''}] {preview}"
+
+    _excluded = {
+        "id", "platform", "author", "user", "text", "message", "body",
+        "content", "createdAt", "updatedAt", "createdTime", "updatedTime",
+        "unread", "hidden", "accountId", "postId", "commentId",
+        "authorName", "authorUsername", "accountUsername", "senderName",
+        "commentCount",
+    }
     return {
         "id": item.get("id", ""),
         "type": "comment",
@@ -160,35 +199,18 @@ def _normalize_comment(item: dict[str, Any]) -> dict[str, Any]:
             "username": username,
             "initials": _make_initials(name),
         },
-        "preview": str(text)[:100],
-        "timestamp": item.get("createdAt") or item.get("updatedAt") or "",
+        "preview": preview,
+        "timestamp": timestamp,
         "unread": item.get("unread", False),
         "hidden": item.get("hidden", False),
         "accountId": item.get("accountId", ""),
         "platformData": {
-            "postId": item.get("postId", ""),
+            "postId": item.get("postId") or item.get("id", ""),
             "commentId": item.get("commentId") or item.get("id", ""),
-            **{
-                k: v
-                for k, v in item.items()
-                if k
-                not in {
-                    "id",
-                    "platform",
-                    "author",
-                    "user",
-                    "text",
-                    "message",
-                    "body",
-                    "createdAt",
-                    "updatedAt",
-                    "unread",
-                    "hidden",
-                    "accountId",
-                    "postId",
-                    "commentId",
-                }
-            },
+            "permalink": item.get("permalink", ""),
+            "commentCount": comment_count,
+            "likeCount": item.get("likeCount", 0),
+            **{k: v for k, v in item.items() if k not in _excluded},
         },
     }
 
@@ -196,20 +218,45 @@ def _normalize_comment(item: dict[str, Any]) -> dict[str, Any]:
 def _normalize_review(item: dict[str, Any]) -> dict[str, Any]:
     """Normalize a review item to the unified stream shape."""
     reviewer = item.get("reviewer") or item.get("author") or {}
-    name = reviewer.get("name") or reviewer.get("displayName") or "Unknown"
-    username = reviewer.get("username") or reviewer.get("handle") or ""
-    text = item.get("text") or item.get("body") or item.get("comment") or ""
+    name = (
+        reviewer.get("name")
+        or reviewer.get("displayName")
+        or item.get("reviewerName")
+        or item.get("authorName")
+        or "Unknown"
+    )
+    username = (
+        reviewer.get("username")
+        or reviewer.get("handle")
+        or item.get("reviewerUsername")
+        or ""
+    )
+    text = (
+        item.get("text")
+        or item.get("body")
+        or item.get("comment")
+        or item.get("content")
+        or ""
+    )
+    timestamp = (
+        item.get("createdAt")
+        or item.get("updatedAt")
+        or item.get("createdTime")
+        or item.get("updatedTime")
+        or ""
+    )
+    rating = item.get("rating") or item.get("starRating") or 0
     return {
         "id": item.get("id", ""),
         "type": "review",
-        "platform": item.get("platform", ""),
+        "platform": item.get("platform", "google"),
         "participant": {
             "name": name,
             "username": username,
             "initials": _make_initials(name),
         },
-        "preview": str(text)[:100],
-        "timestamp": item.get("createdAt") or item.get("updatedAt") or "",
+        "preview": ("★" * rating + " " if rating else "") + str(text)[:100],
+        "timestamp": timestamp,
         "unread": item.get("unread", False),
         "hidden": item.get("hidden", False),
         "accountId": item.get("accountId", ""),
