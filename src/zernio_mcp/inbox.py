@@ -530,14 +530,16 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
 
     # -- GET /inbox/api/conversations/{conv_id} — single conversation ------
 
-    @mcp.custom_route("/inbox/api/conversations/{conv_id:path}", methods=["GET"])
+    @mcp.custom_route("/inbox/api/conversations", methods=["GET"])
     async def inbox_conversation(request: Request) -> JSONResponse:
         if not _validate_session(request):
             return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
-        conv_id = request.path_params["conv_id"]
+        conv_id = request.query_params.get("id", "")
         account_id = request.query_params.get("accountId", "")
         item_type = request.query_params.get("type", "dm")
+        if not conv_id:
+            return JSONResponse({"error": "Missing id parameter"}, status_code=400)
         client = ZernioClient(http_client=get_shared_client())
 
         try:
