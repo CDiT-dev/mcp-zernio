@@ -799,6 +799,43 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   opacity: 0.15;
 }
 
+/* Message attachments */
+.msg-attachment-img {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.msg-attachment-media {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+.att-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted-fg);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+}
+.att-title {
+  font-size: 13px;
+  line-height: 1.4;
+  color: inherit;
+  opacity: 0.85;
+}
+.msg-empty {
+  color: var(--muted-fg);
+  font-style: italic;
+}
+
 /* Message hover actions */
 .msg-actions-btn {
   position: absolute;
