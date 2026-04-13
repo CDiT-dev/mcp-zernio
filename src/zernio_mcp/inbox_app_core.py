@@ -143,11 +143,10 @@ INBOX_JS_CORE = """\
       });
     },
     conversation: function(id, accountId, itemType) {
-      var url = '/inbox/api/conversations/' + encodeURIComponent(id);
-      var params = [];
+      var params = ['id=' + encodeURIComponent(id)];
       if (accountId) params.push('accountId=' + encodeURIComponent(accountId));
       if (itemType) params.push('type=' + encodeURIComponent(itemType));
-      if (params.length) url += '?' + params.join('&');
+      var url = '/inbox/api/conversations?' + params.join('&');
       return fetch(url).then(function(resp) {
         if (!resp.ok) throw new Error('Failed to load conversation');
         return resp.json();
