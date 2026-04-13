@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.20] - 2026-04-13
+
+- feat: comment thread detail view with commenter names
+
+
 ## [0.3.19] - 2026-04-13
 
 - fix: Open in App links — extract URL from platformData
