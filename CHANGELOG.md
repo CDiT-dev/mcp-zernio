@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.25] - 2026-04-13
+
+- fix: nav item icon sizing + sidebar footer dark mode toggle styling
+
+
 ## [0.3.24] - 2026-04-13
 
 - fix: handle non-empty but non-JSON response bodies from Zernio API

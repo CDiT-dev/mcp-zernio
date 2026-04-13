@@ -1,6 +1,6 @@
 [project]
 name = "mcp-zernio"
-version = "0.3.24"
+version = "0.3.25"
 description = "FastMCP wrapper for Zernio social media management API"
 readme = "README.md"
 requires-python = ">=3.12"
