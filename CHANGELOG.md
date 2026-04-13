@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.26] - 2026-04-13
+
+- fix: search icon positioned inside input field
+
+
 ## [0.3.25] - 2026-04-13
 
 - fix: nav item icon sizing + sidebar footer dark mode toggle styling
