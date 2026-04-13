@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.21] - 2026-04-13
+
+- fix: use {conv_id:path} to handle Bluesky IDs with slashes
+
+
 ## [0.3.20] - 2026-04-13
 
 - feat: comment thread detail view with commenter names
