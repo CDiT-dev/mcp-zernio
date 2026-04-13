@@ -537,72 +537,155 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
 
         conv_id = request.path_params["conv_id"]
         account_id = request.query_params.get("accountId", "")
+        item_type = request.query_params.get("type", "dm")
         client = ZernioClient(http_client=get_shared_client())
 
         try:
             params: dict[str, Any] = {}
             if account_id:
                 params["accountId"] = account_id
-            conversation, messages = await asyncio.gather(
-                client.get(f"/v1/inbox/conversations/{conv_id}", **params),
-                client.get(f"/v1/inbox/conversations/{conv_id}/messages", **params),
-            )
 
-            # Normalize conversation data to match JS expectations
-            conv_data = conversation.get("data") or conversation
-            conv_name = (
-                conv_data.get("participantName")
-                or conv_data.get("senderName")
-                or "Unknown"
-            )
-            conv_username = (
-                conv_data.get("participantUsername")
-                or conv_data.get("accountUsername")
-                or ""
-            )
-            conv_platform = conv_data.get("platform", "")
-            conv_url = (
-                conv_data.get("url")
-                or conv_data.get("platformUrl")
-                or conv_data.get("permalink")
-                or conv_data.get("instagramProfile", {}).get("url", "")
-                or ""
-            )
-            normalized_conv = {
-                "id": conv_data.get("id", conv_id),
-                "type": "dm",
-                "platform": conv_platform,
-                "participant": {
-                    "name": conv_name,
-                    "username": conv_username,
-                    "initials": _make_initials(conv_name),
-                },
-                "accountId": conv_data.get("accountId", account_id),
-                "platformUrl": conv_url,
-                "replyAs": {"username": conv_data.get("accountUsername", "")},
-                "status": conv_data.get("status", ""),
-            }
+            if item_type == "comment":
+                # For comments: fetch the post's comment thread
+                comments_data = await client.get(
+                    f"/v1/inbox/comments/{conv_id}", **params
+                )
+                raw_comments = (
+                    comments_data
+                    if isinstance(comments_data, list)
+                    else comments_data.get("data")
+                    or comments_data.get("comments")
+                    or []
+                )
 
-            # Normalize messages
-            raw_msgs = (
-                messages
-                if isinstance(messages, list)
-                else messages.get("data")
-                or messages.get("messages")
-                or []
-            )
-            normalized_msgs = []
-            for msg in raw_msgs:
-                direction = msg.get("direction", "")
-                sender = "me" if direction == "outgoing" else "them"
-                normalized_msgs.append({
-                    "id": msg.get("id", ""),
-                    "content": msg.get("message") or msg.get("text") or msg.get("content") or "",
-                    "sender": sender,
-                    "timestamp": msg.get("createdAt") or msg.get("timestamp") or "",
-                    "status": "sent",
-                    "attachments": msg.get("attachments") or [],
-                })
+                # Build conversation from the post info
+                normalized_conv = {
+                    "id": conv_id,
+                    "type": "comment",
+                    "platform": raw_comments[0].get("platform", "") if raw_comments else "",
+                    "participant": {
+                        "name": "Post Comments",
+                        "username": params.get("accountId", ""),
+                        "initials": "PC",
+                    },
+                    "accountId": account_id,
+                    "platformUrl": "",
+                    "platformData": {"postId": conv_id},
+                    "replyAs": {"username": ""},
+                    "status": "",
+                }
+
+                # Each comment becomes a message
+                normalized_msgs = []
+                for c in raw_comments:
+                    author_name = (
+                        c.get("authorName")
+                        or c.get("username")
+                        or c.get("from", {}).get("name", "")
+                        or c.get("from", {}).get("username", "")
+                        or "Unknown"
+                    )
+                    author_username = (
+                        c.get("authorUsername")
+                        or c.get("username")
+                        or c.get("from", {}).get("username", "")
+                        or ""
+                    )
+                    text = (
+                        c.get("text")
+                        or c.get("message")
+                        or c.get("content")
+                        or c.get("body")
+                        or ""
+                    )
+                    timestamp = (
+                        c.get("createdAt")
+                        or c.get("timestamp")
+                        or c.get("createdTime")
+                        or ""
+                    )
+                    is_own = c.get("isOwn", False) or c.get("direction") == "outgoing"
+                    like_count = c.get("likeCount", 0)
+                    normalized_msgs.append({
+                        "id": c.get("id", ""),
+                        "content": text,
+                        "sender": "me" if is_own else "them",
+                        "senderName": author_name,
+                        "senderUsername": author_username,
+                        "timestamp": timestamp,
+                        "status": "sent",
+                        "likeCount": like_count,
+                        "attachments": c.get("attachments") or [],
+                    })
+
+                    # Update conv info from first comment's platform data
+                    if not normalized_conv["platformUrl"]:
+                        normalized_conv["platformUrl"] = c.get("permalink", "")
+                    if not normalized_conv["platform"]:
+                        normalized_conv["platform"] = c.get("platform", "")
+                    if not normalized_conv["replyAs"]["username"]:
+                        normalized_conv["replyAs"]["username"] = c.get("accountUsername", "")
+
+            else:
+                # For DMs: fetch conversation + messages
+                conversation, messages = await asyncio.gather(
+                    client.get(f"/v1/inbox/conversations/{conv_id}", **params),
+                    client.get(f"/v1/inbox/conversations/{conv_id}/messages", **params),
+                )
+
+                conv_data = conversation.get("data") or conversation
+                conv_name = (
+                    conv_data.get("participantName")
+                    or conv_data.get("senderName")
+                    or "Unknown"
+                )
+                conv_username = (
+                    conv_data.get("participantUsername")
+                    or conv_data.get("accountUsername")
+                    or ""
+                )
+                conv_platform = conv_data.get("platform", "")
+                conv_url = (
+                    conv_data.get("url")
+                    or conv_data.get("platformUrl")
+                    or conv_data.get("permalink")
+                    or conv_data.get("instagramProfile", {}).get("url", "")
+                    or ""
+                )
+                normalized_conv = {
+                    "id": conv_data.get("id", conv_id),
+                    "type": "dm",
+                    "platform": conv_platform,
+                    "participant": {
+                        "name": conv_name,
+                        "username": conv_username,
+                        "initials": _make_initials(conv_name),
+                    },
+                    "accountId": conv_data.get("accountId", account_id),
+                    "platformUrl": conv_url,
+                    "replyAs": {"username": conv_data.get("accountUsername", "")},
+                    "status": conv_data.get("status", ""),
+                }
+
+                raw_msgs = (
+                    messages
+                    if isinstance(messages, list)
+                    else messages.get("data")
+                    or messages.get("messages")
+                    or []
+                )
+                normalized_msgs = []
+                for msg in raw_msgs:
+                    direction = msg.get("direction", "")
+                    sender = "me" if direction == "outgoing" else "them"
+                    normalized_msgs.append({
+                        "id": msg.get("id", ""),
+                        "content": msg.get("message") or msg.get("text") or msg.get("content") or "",
+                        "sender": sender,
+                        "timestamp": msg.get("createdAt") or msg.get("timestamp") or "",
+                        "status": "sent",
+                        "attachments": msg.get("attachments") or [],
+                    })
 
             sid = _get_session_id(request)
             response = JSONResponse({

@@ -799,6 +799,17 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   opacity: 0.15;
 }
 
+/* Message sender name (for comment threads) */
+.msg-sender-name {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.msg-sender-name svg { width: 12px; height: 12px; }
+
 /* Message attachments */
 .msg-attachment-img {
   max-width: 100%;

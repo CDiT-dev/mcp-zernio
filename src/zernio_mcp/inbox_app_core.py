@@ -142,9 +142,12 @@ INBOX_JS_CORE = """\
         return resp.json();
       });
     },
-    conversation: function(id, accountId) {
+    conversation: function(id, accountId, itemType) {
       var url = '/inbox/api/conversations/' + encodeURIComponent(id);
-      if (accountId) url += '?accountId=' + encodeURIComponent(accountId);
+      var params = [];
+      if (accountId) params.push('accountId=' + encodeURIComponent(accountId));
+      if (itemType) params.push('type=' + encodeURIComponent(itemType));
+      if (params.length) url += '?' + params.join('&');
       return fetch(url).then(function(resp) {
         if (!resp.ok) throw new Error('Failed to load conversation');
         return resp.json();
@@ -240,7 +243,8 @@ INBOX_JS_CORE = """\
     render();
     var item = state.items.find(function(i) { return i.id === id; });
     var accountId = item ? item.accountId : '';
-    api.conversation(id, accountId).then(function(data) {
+    var itemType = item ? item.type : 'dm';
+    api.conversation(id, accountId, itemType).then(function(data) {
       state.conversation = data.conversation;
       state.messages = data.messages || [];
       state.loading = false;
@@ -689,7 +693,18 @@ INBOX_JS_CORE = """\
         bubbleContent = '<p class="msg-empty">[Message]</p>';
       }
 
-      html += '<div class="message ' + msgClass + (msg.status === 'failed' ? ' failed' : '') + '">' +
+      // Show commenter name for comment threads
+      var senderLabel = '';
+      if (conv.type === 'comment' && msg.senderName) {
+        var senderColor = msg.sender === 'me' ? 'var(--primary)' : 'var(--fg)';
+        senderLabel = '<span class="msg-sender-name" style="color:' + senderColor + '">' +
+          escapeHtml(msg.senderName) +
+          (msg.likeCount ? ' &middot; ' + ICONS.heart + ' ' + msg.likeCount : '') +
+        '</span>';
+      }
+
+      html += '<div class="message ' + msgClass + (msg.status === 'failed' ? ' failed' : '') + '" data-msg-id="' + escapeHtml(msg.id) + '">' +
+        senderLabel +
         '<div class="message-bubble">' + bubbleContent + '</div>' +
         '<span class="message-time">' + formatTime(msg.timestamp) + statusText + '</span>' +
       '</div>';
