@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.15] - 2026-04-13
+
+- feat: render message attachments (reels, videos, images)
+
+
 ## [0.3.14] - 2026-04-13
 
 - fix: comment + review normalizers for Zernio field names
