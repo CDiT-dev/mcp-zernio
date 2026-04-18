@@ -5,7 +5,7 @@ description = "FastMCP wrapper for Zernio social media management API"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastmcp>=3.2.2",
+    "fastmcp>=3.2.4",
     "httpx>=0.28.1",
     "pydantic-settings>=2.13.1",
     "resend>=2.0.0",
