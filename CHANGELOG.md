@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.27] - 2026-04-18
+
+- feat(reliability): stateless_http, /health, fail-fast auth, FastMCP 3.2.4
+
+
 ## [0.3.26] - 2026-04-13
 
 - fix: search icon positioned inside input field
