@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.29] - 2026-04-21
+
+- fix(security): SecretStr for inbox passphrase + Resend key, add __main__.py + py.typed
+
+
 ## [0.3.28] - 2026-04-20
 
 - ci(deps): enable Dependabot weekly updates
