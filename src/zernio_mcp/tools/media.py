@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from mcp.types import ToolAnnotations
+from pydantic import HttpUrl
 
 from zernio_mcp.server import mcp
 from zernio_mcp.client import ZernioAPIError, SSRFError
@@ -13,7 +14,7 @@ from zernio_mcp.upload import create_upload_token, get_upload_result
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def media_upload(
-    url: str,
+    url: HttpUrl,
     file_name: str = "upload",
 ) -> dict:
     """[social] Upload media from a URL for use in posts. Returns publicUrl.
@@ -27,7 +28,7 @@ async def media_upload(
     """
     c = client()
     try:
-        data, content_type = await c.fetch_url_bytes(url)
+        data, content_type = await c.fetch_url_bytes(str(url))
         ext = content_type.split("/")[-1].replace("quicktime", "mov")
         presign = await c.presign_media(f"{file_name}.{ext}", content_type)
         await c.upload_to_gcs(presign["uploadUrl"], data, content_type)
