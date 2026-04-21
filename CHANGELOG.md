@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.30] - 2026-04-21
+
+- feat(media): upgrade media_upload url param to HttpUrl
+
+
 ## [0.3.29] - 2026-04-21
 
 - fix(security): SecretStr for inbox passphrase + Resend key, add __main__.py + py.typed
