@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.32] - 2026-04-21
+
+- fix(inbox): forward account_id to get_conversation so IG DMs return messages
+
+
 ## [0.3.31] - 2026-04-21
 
 - fix(research): require dot-boundary in platform detection
