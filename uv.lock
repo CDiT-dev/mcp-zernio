@@ -642,7 +642,7 @@ wheels = [
 
 [[package]]
 name = "mcp-zernio"
-version = "0.3.29"
+version = "0.3.32"
 source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
@@ -663,7 +663,7 @@ requires-dist = [
     { name = "fastmcp", specifier = ">=3.2.4" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic-settings", specifier = ">=2.13.1" },
-    { name = "resend", specifier = ">=2.0.0" },
+    { name = "resend", specifier = ">=2.29.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1072,15 +1072,15 @@ wheels = [
 
 [[package]]
 name = "resend"
-version = "2.27.0"
+version = "2.29.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/96/da/3d342cacbde7143e36782243caa3715d9e49cadb43e804419493c784869b/resend-2.27.0.tar.gz", hash = "sha256:abc183da7566c1fdba8221ec5acd9f954c2ff516a0c2615bee2a41bc9db3e277", size = 37177, upload-time = "2026-04-01T21:19:31.823Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/e7/ebb504fee5dac9710192ca04550e8c8250bb2a7612a2397829e3934eb157/resend-2.29.0.tar.gz", hash = "sha256:cd905809a64128b29d5beda1d4a5bda8d60d438a66942ed736ca40238e9d2331", size = 43125, upload-time = "2026-04-16T13:14:56.183Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/95/783b09d24c8f40b900a2728b67fd3c1401d4a6afcdf1db1c8475c249559d/resend-2.27.0-py2.py3-none-any.whl", hash = "sha256:5bc8ddebb0418127fc3e47eb29ab72af727861481c4b051b96cb693df8f8dc40", size = 59831, upload-time = "2026-04-01T21:19:30.471Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/91/9299b0eac66a33d48dea8c825063077f28d188d89b2d3178c3837c40b3df/resend-2.29.0-py2.py3-none-any.whl", hash = "sha256:aad7c6097c26cf2dbe46534a1fc8d92637fbdea28243b00a3363c8d3136331de", size = 68320, upload-time = "2026-04-16T13:14:54.928Z" },
 ]
 
 [[package]]
