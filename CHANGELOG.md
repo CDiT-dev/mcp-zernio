@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.31] - 2026-04-21
+
+- fix(research): require dot-boundary in platform detection
+
+
 ## [0.3.30] - 2026-04-21
 
 - feat(media): upgrade media_upload url param to HttpUrl
