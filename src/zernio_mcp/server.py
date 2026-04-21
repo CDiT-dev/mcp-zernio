@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -24,12 +23,8 @@ async def lifespan(server):
     await close_shared_client()
 
 
-_api_key = os.getenv("MCP_API_KEY", "")
-if settings.mcp_transport == "http" and not _api_key:
-    raise SystemExit(
-        "MCP_API_KEY is required in HTTP mode. Refusing to start "
-        "an unauthenticated server."
-    )
+# Bearer token auth via settings (fail-fast for HTTP mode handled in config.py).
+_api_key = settings.mcp_api_key.get_secret_value()
 _auth = BearerTokenVerifier(api_key=_api_key) if _api_key else None
 _start_time = datetime.now(timezone.utc)
 

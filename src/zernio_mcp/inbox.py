@@ -317,7 +317,7 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
             if _validate_session(request):
                 return HTMLResponse(_INBOX_HTML)
             # Show login page
-            has_magic = bool(settings.resend_api_key and settings.inbox_email)
+            has_magic = bool(settings.resend_api_key.get_secret_value() and settings.inbox_email)
             masked_email = ""
             if has_magic and settings.inbox_email:
                 parts = settings.inbox_email.split("@")
@@ -369,13 +369,13 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
 
     @mcp.custom_route("/inbox/auth", methods=["POST"])
     async def inbox_auth(request: Request) -> JSONResponse:
-        if not settings.inbox_passphrase:
+        if not settings.inbox_passphrase.get_secret_value():
             return JSONResponse({"error": "Login not configured"}, status_code=503)
 
         body = await request.json()
         passphrase = body.get("passphrase", "")
 
-        if not secrets.compare_digest(passphrase, settings.inbox_passphrase):
+        if not secrets.compare_digest(passphrase, settings.inbox_passphrase.get_secret_value()):
             return JSONResponse({"error": "Invalid passphrase"}, status_code=401)
 
         sid = secrets.token_urlsafe(32)
@@ -388,7 +388,7 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
 
     @mcp.custom_route("/inbox/auth/magic", methods=["POST"])
     async def inbox_auth_magic(request: Request) -> JSONResponse:
-        if not settings.resend_api_key or not settings.inbox_email:
+        if not settings.resend_api_key.get_secret_value() or not settings.inbox_email:
             return JSONResponse({"error": "Magic links not configured"}, status_code=503)
 
         token = create_inbox_token()
@@ -396,7 +396,7 @@ def register_inbox_routes(mcp) -> None:  # noqa: C901
 
         try:
             import resend
-            resend.api_key = settings.resend_api_key
+            resend.api_key = settings.resend_api_key.get_secret_value()
             resend.Emails.send({
                 "from": "Zernio Inbox <inbox@cdit-dev.de>",
                 "to": settings.inbox_email,
