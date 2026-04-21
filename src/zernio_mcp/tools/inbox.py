@@ -27,6 +27,7 @@ async def inbox_list(platform: str | None = None, status: str | None = None, lim
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def inbox_get_conversation(
     conversation_id: str,
+    account_id: str | None = None,
     include_messages: bool = True,
     message_limit: int = 20,
 ) -> dict:
@@ -37,15 +38,27 @@ async def inbox_get_conversation(
     conversation metadata.
 
     Args:
-        conversation_id: The conversation to retrieve.
+        conversation_id: The conversation to retrieve. For Instagram DMs
+            this is the participant's numeric IG user id (as returned
+            by ``inbox_list``'s ``id`` field), NOT the Mongo ObjectId
+            that appears in webhook payloads as ``conversationId``.
+        account_id: The owning Zernio account id. Required by the
+            upstream endpoint — if not supplied the call 400s with
+            "accountId query parameter is required". Typically the
+            ``accountId`` field from ``inbox_list`` or from the
+            webhook's ``message.account.id`` field.
         include_messages: Include messages (default True).
         message_limit: Max messages to include (default 20).
     """
     try:
-        conv = await client().get(f"/v1/inbox/conversations/{conversation_id}")
+        conv = await client().get(
+            f"/v1/inbox/conversations/{conversation_id}",
+            accountId=account_id,
+        )
         if include_messages:
             msgs = await client().get(
                 f"/v1/inbox/conversations/{conversation_id}/messages",
+                accountId=account_id,
                 limit=message_limit,
             )
             conv["messages"] = msgs.get("messages", msgs if isinstance(msgs, list) else [])

@@ -357,3 +357,27 @@ async def test_get_conversation_without_messages():
     assert "messages" not in result
     # Only one request should have been made (no messages endpoint call)
     assert len(respx.calls) == 1
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_get_conversation_forwards_account_id():
+    """Instagram DM lookups upstream require an ``accountId`` query param;
+    without it the API 400s with "accountId query parameter is required".
+    The tool must forward the ``account_id`` arg to BOTH the conversation
+    and messages endpoints."""
+    conv_route = respx.get(
+        f"{API_BASE}/v1/inbox/conversations/986574013919006",
+        params={"accountId": "acc-123"},
+    ).mock(return_value=httpx.Response(200, json={"_id": "conv", "platform": "instagram"}))
+    msg_route = respx.get(
+        f"{API_BASE}/v1/inbox/conversations/986574013919006/messages",
+        params={"accountId": "acc-123", "limit": 5},
+    ).mock(return_value=httpx.Response(200, json={"messages": [{"_id": "m1"}]}))
+
+    result = await inbox_get_conversation(
+        "986574013919006", account_id="acc-123", message_limit=5
+    )
+    assert conv_route.called
+    assert msg_route.called
+    assert len(result["messages"]) == 1
