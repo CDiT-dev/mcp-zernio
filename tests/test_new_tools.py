@@ -219,6 +219,21 @@ async def test_research_download_unknown_platform():
     assert "error" in result
 
 
+@pytest.mark.asyncio
+async def test_research_download_does_not_misroute_fbsbx_to_twitter():
+    """`lookaside.fbsbx.com` used to match `x.com` via substring endswith
+    and get sent to the Twitter/X downloader. After the dot-boundary fix,
+    it's unrouted (hits the "cannot detect platform" branch) rather than
+    forwarded to any real platform."""
+    from zernio_mcp.tools.research import research_download_post
+
+    result = await research_download_post(
+        url="https://lookaside.fbsbx.com/ig_messaging_cdn/?asset_id=123"
+    )
+    assert "error" in result
+    assert "Cannot detect platform" in result["error"]
+
+
 @respx.mock
 @pytest.mark.asyncio
 async def test_youtube_transcript():

@@ -21,6 +21,20 @@ _PLATFORM_MAP = {
 }
 
 
+def _detect_platform(host: str) -> str | None:
+    """Match host against _PLATFORM_MAP keys at a dot boundary.
+
+    A naive ``host.endswith(key)`` misroutes any host ending in an MCP
+    key's suffix — e.g. ``lookaside.fbsbx.com`` matches ``x.com`` and gets
+    sent to Zernio's Twitter/X downloader. Match only exact host OR host
+    ending in ``.{key}`` so the boundary is respected.
+    """
+    for key, platform in _PLATFORM_MAP.items():
+        if host == key or host.endswith("." + key):
+            return platform
+    return None
+
+
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 async def research_download_post(url: str) -> dict:
     """[social] Download post metadata from any supported platform using a post URL.
@@ -39,8 +53,8 @@ async def research_download_post(url: str) -> dict:
                   "https://www.tiktok.com/@user/video/123"
                   "https://twitter.com/user/status/123"
     """
-    host = (urlparse(url).hostname or "").removeprefix("www.")
-    platform = next((v for k, v in _PLATFORM_MAP.items() if host.endswith(k)), None)
+    host = (urlparse(url).hostname or "").removeprefix("www.").lower()
+    platform = _detect_platform(host)
     if not platform:
         return error(
             f"Cannot detect platform from URL: {url}. "
