@@ -16,6 +16,11 @@ services:
       - INBOX_EMAIL=${INBOX_EMAIL:-}
     volumes:
       - fastmcp-data:/data/fastmcp
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   fastmcp-data:
