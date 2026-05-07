@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.33] - 2026-05-07
+
+- fix(healthcheck): correct port from 8000 to 8717
+
+
 ## [0.3.32] - 2026-04-21
 
 - fix(inbox): forward account_id to get_conversation so IG DMs return messages
