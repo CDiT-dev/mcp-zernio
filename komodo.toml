@@ -1,7 +1,7 @@
 [[stack]]
 name = "git-mcp-zernio"
 [stack.config]
-server_id = "6977391729c5422ae385955f"  # ubuntu-smurf-mirror
+server_id = "6977391729c5422ae385955f"  # nebula-1 (was ubuntu-smurf-mirror)
 git_provider = "github.com"
 git_account = "CDiT-dev"
 repo = "mcp-zernio"
@@ -11,7 +11,7 @@ webhook_enabled = true
 
 [stack.config.environment]
 ZERNIO_API_KEY = "[[ZERNIO_API_KEY]]"
-MCP_ZERNIO_API_KEY = "[[MCP_ZERNIO_API_KEY]]"
+MCP_API_KEY = "[[MCP_ZERNIO_API_KEY]]"
 KEYCLOAK_ISSUER = "[[KEYCLOAK_ISSUER]]"
 KEYCLOAK_AUDIENCE = "mcp-zernio"
 MCP_TRANSPORT = "http"

@@ -80,8 +80,7 @@ _CACHE_TTL = 60.0
 def cache_get(key: str) -> Any | None:
     entry = _cache.get(key)
     if entry:
-        ts, value = entry[0], entry[1]
-        ttl = entry[2] if len(entry) > 2 else _CACHE_TTL
+        ts, value, ttl = entry
         if (time.monotonic() - ts) < ttl:
             return value
     return None
