@@ -388,13 +388,15 @@ async def test_posts_create_thread_twitter():
     assert result["post"]["_id"] == "post_thread"
     req = respx.calls.last.request
     body = json.loads(req.content)
-    assert body["content"] == ""
+    assert body["content"] == "First tweet"
     assert body["publishNow"] is True
+    assert "mediaItems" not in body
     psd = body["platforms"][0]["platformSpecificData"]
-    assert len(psd["threadItems"]) == 3
-    assert psd["threadItems"][0]["content"] == "First tweet"
-    assert psd["threadItems"][1]["mediaItems"] == [{"url": "https://img.test/1.jpg", "type": "image"}]
-    assert "mediaItems" not in psd["threadItems"][0]
+    assert len(psd["threadItems"]) == 2
+    assert psd["threadItems"][0]["content"] == "Second tweet"
+    assert psd["threadItems"][0]["mediaItems"] == [{"url": "https://img.test/1.jpg", "type": "image"}]
+    assert psd["threadItems"][1]["content"] == "Third tweet"
+    assert "mediaItems" not in psd["threadItems"][1]
 
 
 @respx.mock
@@ -416,8 +418,9 @@ async def test_posts_create_thread_bluesky():
     req = respx.calls.last.request
     body = json.loads(req.content)
     psd = body["platforms"][0]["platformSpecificData"]
-    assert len(psd["threadItems"]) == 2
-    assert body["content"] == ""
+    assert len(psd["threadItems"]) == 1
+    assert psd["threadItems"][0]["content"] == "Skeet two"
+    assert body["content"] == "Skeet one"
 
 
 @pytest.mark.asyncio
@@ -508,6 +511,8 @@ async def test_posts_create_thread_cross_post():
     )
     req = respx.calls.last.request
     body = json.loads(req.content)
+    assert body["content"] == "Thread post 1"
     for p in body["platforms"]:
         assert "threadItems" in p["platformSpecificData"]
-        assert len(p["platformSpecificData"]["threadItems"]) == 2
+        assert len(p["platformSpecificData"]["threadItems"]) == 1
+        assert p["platformSpecificData"]["threadItems"][0]["content"] == "Thread post 2"

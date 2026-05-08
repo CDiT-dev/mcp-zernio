@@ -118,8 +118,13 @@ async def posts_create(
                     f"Unsupported platforms: {', '.join(sorted(unsupported))}"
                 )
 
+            # Zernio treats the top-level post as the lead of the thread; the
+            # follow-up posts go into platformSpecificData.threadItems. Sending
+            # an empty top-level content is rejected with 400.
+            lead_item, *follow_items = thread_items
+
             api_thread_items = []
-            for item in thread_items:
+            for item in follow_items:
                 api_item: dict = {"content": item.content}
                 if item.media_items:
                     api_item["mediaItems"] = [m.model_dump() for m in item.media_items]
@@ -129,8 +134,9 @@ async def posts_create(
                 p.setdefault("platformSpecificData", {})
                 p["platformSpecificData"]["threadItems"] = api_thread_items
 
-            # Zernio API requires top-level content; empty string signals thread mode
-            body: dict = {"content": "", "platforms": platforms}
+            body: dict = {"content": lead_item.content, "platforms": platforms}
+            if lead_item.media_items:
+                body["mediaItems"] = [m.model_dump() for m in lead_item.media_items]
         else:
             body = {"content": content or "", "platforms": platforms}
 
