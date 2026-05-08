@@ -1,3 +1,8 @@
 """Zernio MCP Server."""
 
-__version__ = "0.2.0"
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("mcp-zernio")
+except PackageNotFoundError:
+    __version__ = "0.0.0+dev"
