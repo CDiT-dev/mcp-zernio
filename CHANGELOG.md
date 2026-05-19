@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.38] - 2026-05-19
+
+- fix(zernio): actually promote draft → scheduled (CDI-1004 follow-up)
+
+
 ## [0.3.34] - 2026-05-07
 
 - ops(docker): add log rotation (10m/3 files) to cap unbounded json-file logs
