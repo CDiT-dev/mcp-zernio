@@ -261,21 +261,27 @@ async def posts_update(
 
     Only draft and scheduled posts can be edited. Published posts cannot be modified.
 
-    ## Draft → scheduled transition (CDI-1004)
+    ## scheduled_for on a draft does NOT promote it (CDI-1004)
 
-    Passing ``scheduled_for`` on a *draft* now promotes the post to
-    ``status: "scheduled"`` in the same call, so the scheduler picks it up.
-    Earlier versions stored the new timestamp but left the post as a draft,
-    causing it to never auto-publish. If you only need to reschedule an
-    already-scheduled post, the status stays ``"scheduled"``.
+    Setting ``scheduled_for`` updates the timestamp stored on a draft, but
+    Zernio's PUT endpoint does **not** transition the post to
+    ``status: "scheduled"`` regardless of the body shape we send (verified
+    against the live API for `status`, `state`, `lifecycle`, `publishNow`,
+    and no extra field). The scheduler only picks up posts that were created
+    with ``scheduledFor`` at creation time.
+
+    To actually promote a draft to scheduled, use ``posts_schedule``, which
+    delete-then-recreates the post with ``scheduledFor`` set (the post_id
+    changes — see that tool's docstring).
 
     Args:
         post_id: The post to update.
         content: New post text content.
         platforms: Updated platform targets.
         media_items: Media attachments.
-        scheduled_for: New scheduled datetime (ISO 8601). On a draft post this
-            also flips the status to "scheduled".
+        scheduled_for: New scheduled datetime (ISO 8601). On an already-scheduled
+            post this reschedules in place. On a draft this updates the stored
+            timestamp but does NOT flip status — use ``posts_schedule`` for that.
     """
     try:
         body: dict = {}
@@ -287,49 +293,136 @@ async def posts_update(
             body["mediaItems"] = [m.model_dump() for m in media_items]
         if scheduled_for is not None:
             body["scheduledFor"] = scheduled_for
-            # CDI-1004: the Zernio API stores scheduledFor without flipping
-            # the post out of draft, so the scheduler never picks it up. Look
-            # the current state up and include an explicit status transition
-            # when promoting a draft.
-            try:
-                current = await client().get(f"/v1/posts/{post_id}")
-                current_status = (current.get("post") or current).get("status", "")
-                if current_status == "draft":
-                    body["status"] = "scheduled"
-            except ZernioAPIError:
-                # If the read fails (e.g. 404), let the PUT surface the error.
-                pass
         return await client().put(f"/v1/posts/{post_id}", body)
     except ZernioAPIError as e:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+def _extract_recreate_body(post: dict, scheduled_for: str) -> dict:
+    """Build a posts_create-compatible body from an existing draft post.
+
+    Preserves content, platforms (with platformSpecificData / threadItems
+    where present), mediaItems, and profileId. The original ``_id`` is not
+    carried over — the recreated post gets a fresh id.
+    """
+    body: dict = {
+        "content": post.get("content", ""),
+        "scheduledFor": scheduled_for,
+    }
+    raw_platforms = post.get("platforms") or []
+    clean_platforms: list[dict] = []
+    for entry in raw_platforms:
+        # Strip per-platform status/result/timestamp fields. Keep wiring
+        # fields that posts_create expects: platform, accountId,
+        # platformSpecificData (incl. threadItems).
+        platform = entry.get("platform")
+        account = entry.get("accountId") or entry.get("account_id")
+        if not platform or not account:
+            continue
+        cleaned: dict = {"platform": platform, "accountId": account}
+        psd = entry.get("platformSpecificData")
+        if psd:
+            cleaned["platformSpecificData"] = psd
+        clean_platforms.append(cleaned)
+    body["platforms"] = clean_platforms
+
+    media_items = post.get("mediaItems")
+    if media_items:
+        body["mediaItems"] = media_items
+
+    # profileId on a post can be either a bare ObjectId string or a populated
+    # subdocument {"_id": ..., "name": ...} (the GET response populates it).
+    profile_id = post.get("profileId")
+    if isinstance(profile_id, dict):
+        profile_id = profile_id.get("_id")
+    if profile_id:
+        body["profileId"] = profile_id
+
+    return body
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
 async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
     """[social] Promote a draft post to scheduled at the given ISO 8601 datetime.
 
-    Dedicated tool for the draft → scheduled transition documented in
-    CDI-1004. Equivalent to ``posts_update(post_id, scheduled_for=...)`` on a
-    draft, but explicit about intent and rejects already-published posts with
-    a clear error.
+    ## Behavior (CDI-1004 follow-up)
+
+    Zernio's PUT endpoint cannot transition a draft to scheduled — it stores
+    ``scheduledFor`` but silently keeps ``status: "draft"`` no matter which
+    body shape we send. There is no dedicated transition endpoint either
+    (``/schedule``, ``/publish``, ``/promote`` all 404).
+
+    So this tool implements the transition as **delete-then-recreate**:
+
+      1. GET the draft to capture content, platforms, mediaItems, profileId,
+         and any platformSpecificData/threadItems.
+      2. POST /v1/posts with those fields plus ``scheduledFor`` set.
+      3. Only after the new post is confirmed created, DELETE the original.
+
+    **The post_id changes.** The response is the new post (status=scheduled)
+    and includes ``previous_post_id`` so callers can update any references
+    they held. If the original delete fails after the recreate succeeds, the
+    response still returns the new post but flags the orphaned original in
+    ``orphaned_previous_post_id`` and ``warning``.
+
+    Already-scheduled posts are rescheduled in place via PUT — no recreate
+    needed, post_id is preserved.
 
     Args:
-        post_id: The draft post to schedule.
+        post_id: The draft (or scheduled) post to schedule.
         scheduled_for: ISO 8601 datetime to publish at (e.g. "2026-04-01T09:00:00Z").
     """
     if not scheduled_for:
         return error("posts_schedule requires 'scheduled_for' (ISO 8601 datetime).")
     try:
         current = await client().get(f"/v1/posts/{post_id}")
-        status = (current.get("post") or current).get("status", "")
+        post = current.get("post") or current
+        status = post.get("status", "")
+
         if status == "published":
             return error("Cannot schedule a published post. Use posts_create for a new post.")
         if status == "failed":
             return error("Cannot schedule a failed post. Inspect with posts_get and use posts_retry instead.")
-        return await client().put(
-            f"/v1/posts/{post_id}",
-            {"scheduledFor": scheduled_for, "status": "scheduled"},
-        )
+        if status == "scheduled":
+            # In-place reschedule works for already-scheduled posts.
+            return await client().put(
+                f"/v1/posts/{post_id}",
+                {"scheduledFor": scheduled_for},
+            )
+        if status != "draft":
+            return error(f"Cannot schedule post with status {status!r}.")
+
+        # Draft → scheduled requires delete-then-recreate.
+        recreate_body = _extract_recreate_body(post, scheduled_for)
+        if not recreate_body.get("platforms"):
+            return error(
+                "Cannot schedule a draft with no platform targets. Use "
+                "posts_update to add platforms first, then retry."
+            )
+
+        created = await client().post("/v1/posts", recreate_body)
+        new_post = created.get("post") or created
+        new_id = new_post.get("_id")
+        if not new_id:
+            return error("Recreate returned no post id — refusing to delete the original.")
+
+        # Recreate succeeded — now safe to delete the original draft.
+        try:
+            await client().delete(f"/v1/posts/{post_id}")
+        except ZernioAPIError as delete_err:
+            # New post exists; original couldn't be deleted. Surface both.
+            return {
+                **created,
+                "previous_post_id": post_id,
+                "orphaned_previous_post_id": post_id,
+                "warning": (
+                    f"New scheduled post created ({new_id}), but failed to "
+                    f"delete the original draft ({post_id}): "
+                    f"{delete_err.message}. Delete it manually with posts_delete."
+                ),
+            }
+
+        return {**created, "previous_post_id": post_id}
     except ZernioAPIError as e:
         if e.status_code == 404:
             return error(f"Post {post_id} not found.")
