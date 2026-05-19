@@ -239,56 +239,202 @@ async def test_posts_update():
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_posts_update_promotes_draft_to_scheduled():
-    """CDI-1004: scheduled_for on a draft must include the status transition."""
+async def test_posts_update_does_not_inject_status(monkeypatch):
+    """CDI-1004 follow-up: posts_update must NOT pretend to flip status on a draft.
+
+    The Zernio API silently ignores ``status`` on PUT (verified live), so
+    sending it is misleading. Callers who want to promote a draft must use
+    ``posts_schedule``, which delete-then-recreates the post.
+    """
     from zernio_mcp.tools.posts import posts_update
-    respx.get(f"{API}/v1/posts/post1").mock(
-        return_value=httpx.Response(200, json={"post": {"_id": "post1", "status": "draft"}})
-    )
     put_route = respx.put(f"{API}/v1/posts/post1").mock(
         return_value=httpx.Response(
-            200, json={"post": {"_id": "post1", "status": "scheduled"}}
+            200, json={"post": {"_id": "post1", "status": "draft"}}
         )
     )
     await posts_update(post_id="post1", scheduled_for="2026-06-01T09:00:00Z")
     sent = json.loads(put_route.calls.last.request.content)
-    assert sent.get("status") == "scheduled"
-    assert sent.get("scheduledFor") == "2026-06-01T09:00:00Z"
-
-
-@respx.mock
-@pytest.mark.asyncio
-async def test_posts_update_keeps_scheduled_status_on_reschedule():
-    """CDI-1004: rescheduling an already-scheduled post must NOT inject a status field."""
-    from zernio_mcp.tools.posts import posts_update
-    respx.get(f"{API}/v1/posts/post1").mock(
-        return_value=httpx.Response(200, json={"post": {"_id": "post1", "status": "scheduled"}})
-    )
-    put_route = respx.put(f"{API}/v1/posts/post1").mock(
-        return_value=httpx.Response(200, json={"post": {"_id": "post1", "status": "scheduled"}})
-    )
-    await posts_update(post_id="post1", scheduled_for="2026-06-02T09:00:00Z")
-    sent = json.loads(put_route.calls.last.request.content)
+    assert sent == {"scheduledFor": "2026-06-01T09:00:00Z"}
     assert "status" not in sent
+    # And — importantly — posts_update should not pre-fetch the post just to
+    # decide whether to inject status. One PUT, no GET.
+    assert put_route.called
 
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_posts_schedule_promotes_draft():
-    """CDI-1004: posts_schedule sets status=scheduled and scheduledFor."""
+async def test_posts_schedule_promotes_draft_via_recreate():
+    """CDI-1004 follow-up: posts_schedule delete-recreates a draft.
+
+    Zernio's PUT cannot transition draft→scheduled, so the tool GETs the
+    draft, POSTs a fresh post with scheduledFor set, then DELETEs the
+    original. The returned post has a *new* id.
+    """
     from zernio_mcp.tools.posts import posts_schedule
     respx.get(f"{API}/v1/posts/post1").mock(
-        return_value=httpx.Response(200, json={"post": {"_id": "post1", "status": "draft"}})
+        return_value=httpx.Response(
+            200,
+            json={
+                "post": {
+                    "_id": "post1",
+                    "status": "draft",
+                    "content": "hello world",
+                    "platforms": [
+                        {"platform": "bluesky", "accountId": "acc_1"}
+                    ],
+                    "profileId": {"_id": "prof_1", "name": "Private"},
+                }
+            },
+        )
+    )
+    post_route = respx.post(f"{API}/v1/posts").mock(
+        return_value=httpx.Response(
+            200, json={"post": {"_id": "post1_NEW", "status": "scheduled"}}
+        )
+    )
+    delete_route = respx.delete(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={"deleted": True})
+    )
+
+    result = await posts_schedule(post_id="post1", scheduled_for="2026-06-03T09:00:00Z")
+
+    # New post id is returned, previous id is surfaced.
+    assert result["post"]["_id"] == "post1_NEW"
+    assert result["post"]["status"] == "scheduled"
+    assert result["previous_post_id"] == "post1"
+    assert "orphaned_previous_post_id" not in result
+
+    # Recreate body carries the preserved fields with the new scheduledFor.
+    sent = json.loads(post_route.calls.last.request.content)
+    assert sent["content"] == "hello world"
+    assert sent["scheduledFor"] == "2026-06-03T09:00:00Z"
+    assert sent["platforms"] == [{"platform": "bluesky", "accountId": "acc_1"}]
+    assert sent["profileId"] == "prof_1"
+
+    # Original draft was deleted after the recreate succeeded.
+    assert delete_route.called
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_schedule_reschedules_already_scheduled_in_place():
+    """CDI-1004 follow-up: already-scheduled posts get a plain PUT (no recreate, no id change)."""
+    from zernio_mcp.tools.posts import posts_schedule
+    respx.get(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(
+            200, json={"post": {"_id": "post1", "status": "scheduled"}}
+        )
     )
     put_route = respx.put(f"{API}/v1/posts/post1").mock(
         return_value=httpx.Response(
             200, json={"post": {"_id": "post1", "status": "scheduled"}}
         )
     )
-    result = await posts_schedule(post_id="post1", scheduled_for="2026-06-03T09:00:00Z")
-    assert result["post"]["status"] == "scheduled"
+    post_route = respx.post(f"{API}/v1/posts").mock(
+        return_value=httpx.Response(500, json={"message": "should not be called"})
+    )
+
+    result = await posts_schedule(post_id="post1", scheduled_for="2026-06-05T09:00:00Z")
+
     sent = json.loads(put_route.calls.last.request.content)
-    assert sent == {"scheduledFor": "2026-06-03T09:00:00Z", "status": "scheduled"}
+    assert sent == {"scheduledFor": "2026-06-05T09:00:00Z"}
+    assert result["post"]["_id"] == "post1"
+    assert not post_route.called
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_schedule_recreate_failure_keeps_original():
+    """CDI-1004 follow-up: if recreate fails, the original draft is NOT deleted."""
+    from zernio_mcp.tools.posts import posts_schedule
+    respx.get(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "post": {
+                    "_id": "post1",
+                    "status": "draft",
+                    "content": "hello",
+                    "platforms": [{"platform": "bluesky", "accountId": "acc_1"}],
+                }
+            },
+        )
+    )
+    respx.post(f"{API}/v1/posts").mock(
+        return_value=httpx.Response(400, json={"message": "validation failed"})
+    )
+    delete_route = respx.delete(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={"deleted": True})
+    )
+
+    result = await posts_schedule(post_id="post1", scheduled_for="2026-06-04T09:00:00Z")
+
+    assert "error" in result
+    assert not delete_route.called
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_schedule_orphans_original_when_delete_fails():
+    """CDI-1004 follow-up: recreate succeeds, delete fails — surface the orphan and warn."""
+    from zernio_mcp.tools.posts import posts_schedule
+    respx.get(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "post": {
+                    "_id": "post1",
+                    "status": "draft",
+                    "content": "hello",
+                    "platforms": [{"platform": "bluesky", "accountId": "acc_1"}],
+                }
+            },
+        )
+    )
+    respx.post(f"{API}/v1/posts").mock(
+        return_value=httpx.Response(
+            200, json={"post": {"_id": "post1_NEW", "status": "scheduled"}}
+        )
+    )
+    respx.delete(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(500, json={"message": "delete failed"})
+    )
+
+    result = await posts_schedule(post_id="post1", scheduled_for="2026-06-04T09:00:00Z")
+
+    assert result["post"]["_id"] == "post1_NEW"
+    assert result["orphaned_previous_post_id"] == "post1"
+    assert "warning" in result
+    assert "post1" in result["warning"]
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_schedule_rejects_draft_without_platforms():
+    """CDI-1004 follow-up: a draft with no platforms can't be recreated as scheduled."""
+    from zernio_mcp.tools.posts import posts_schedule
+    respx.get(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "post": {
+                    "_id": "post1",
+                    "status": "draft",
+                    "content": "hello",
+                    "platforms": [],
+                }
+            },
+        )
+    )
+    post_route = respx.post(f"{API}/v1/posts").mock(
+        return_value=httpx.Response(500, json={"message": "should not be called"})
+    )
+
+    result = await posts_schedule(post_id="post1", scheduled_for="2026-06-04T09:00:00Z")
+
+    assert "error" in result
+    assert "platform" in result["error"].lower()
+    assert not post_route.called
 
 
 @respx.mock
