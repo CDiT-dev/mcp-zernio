@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.39] - 2026-05-19
+
+- fix(zernio): unwrap populated accountId in posts_schedule recreate
+
+
 ## [0.3.38] - 2026-05-19
 
 - fix(zernio): actually promote draft → scheduled (CDI-1004 follow-up)
