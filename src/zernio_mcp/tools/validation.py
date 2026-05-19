@@ -10,19 +10,37 @@ from zernio_mcp.tools._common import client, error
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
-async def validate_post_length(content: str, platform: str) -> dict:
+async def validate_post_length(
+    text: str | None = None,
+    platform: str = "",
+    content: str | None = None,
+) -> dict:
     """[social] Quick text-only check: does this content fit the platform's character limit?
 
     Fast pre-flight check — no media validation. Returns valid/invalid with
     remaining character count or overage.
 
+    ## Supported platforms
+
+    Character limits vary per platform. Common: twitter (280), bluesky (300),
+    instagram (2200 caption), linkedin (3000), facebook (63206), threads (500),
+    tiktok (2200 caption), youtube (5000 description).
+
     Args:
-        content: The post text to validate.
+        text: The post text to validate. Preferred parameter name (matches Zernio API).
         platform: Target platform (e.g., "twitter", "instagram", "linkedin").
+        content: Deprecated alias for ``text``. Accepted for backwards compatibility.
     """
+    # Accept either ``text`` (preferred, matches Zernio API) or ``content``
+    # (legacy alias used by earlier MCP releases). See CDI-906.
+    payload_text = text if text is not None else content
+    if payload_text is None:
+        return error("validate_post_length requires the 'text' parameter (or legacy alias 'content').")
+    if not platform:
+        return error("validate_post_length requires the 'platform' parameter.")
     try:
         return await client().post("/v1/tools/validate/post-length", {
-            "content": content, "platform": platform,
+            "text": payload_text, "platform": platform,
         })
     except ZernioAPIError as e:
         return error(e.message)

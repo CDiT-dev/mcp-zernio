@@ -655,7 +655,7 @@ wheels = [
 
 [[package]]
 name = "mcp-zernio"
-version = "0.3.34"
+version = "0.3.35"
 source = { editable = "." }
 dependencies = [
     { name = "authlib" },
