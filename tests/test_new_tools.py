@@ -342,6 +342,49 @@ async def test_accounts_update():
     assert result["updated"] is True
 
 
+@pytest.mark.asyncio
+async def test_accounts_update_rejects_profile_id():
+    """CDI-1056: accounts_update must refuse profileId changes and direct users to account_move."""
+    from zernio_mcp.tools.accounts import accounts_update
+    result = await accounts_update(account_id="a1", settings={"profileId": "p2"})
+    assert "error" in result
+    assert "account_move" in result["error"]
+    # Snake-case alias should also be rejected.
+    result_snake = await accounts_update(account_id="a1", settings={"profile_id": "p2"})
+    assert "error" in result_snake
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_account_move_uses_move_endpoint():
+    """CDI-1061: account_move calls the dedicated move endpoint."""
+    from zernio_mcp.tools.accounts import account_move
+    route = respx.post(f"{API}/v1/accounts/a1/move").mock(
+        return_value=httpx.Response(200, json={"_id": "a1", "profileId": "p2"})
+    )
+    result = await account_move(account_id="a1", target_profile_id="p2")
+    assert result["profileId"] == "p2"
+    assert route.called
+    sent = json.loads(route.calls.last.request.content)
+    assert sent == {"profileId": "p2"}
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_account_move_falls_back_to_patch():
+    """CDI-1061: if the move endpoint 404s, fall back to PATCH on the account resource."""
+    from zernio_mcp.tools.accounts import account_move
+    respx.post(f"{API}/v1/accounts/a1/move").mock(
+        return_value=httpx.Response(404, json={"message": "not found"})
+    )
+    patch_route = respx.patch(f"{API}/v1/accounts/a1").mock(
+        return_value=httpx.Response(200, json={"_id": "a1", "profileId": "p2"})
+    )
+    result = await account_move(account_id="a1", target_profile_id="p2")
+    assert result["profileId"] == "p2"
+    assert patch_route.called
+
+
 @respx.mock
 @pytest.mark.asyncio
 async def test_accounts_delete():

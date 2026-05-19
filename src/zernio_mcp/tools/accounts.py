@@ -63,14 +63,66 @@ async def accounts_health(account_id: str | None = None) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
 async def accounts_update(account_id: str, settings: dict) -> dict:
-    """[social] Update account settings.
+    """[social] Update account settings (display name, username, etc.).
+
+    Does **not** move the account between profiles. The Zernio settings
+    endpoint accepts a ``profileId`` key in the payload but silently ignores
+    it (CDI-1056), which previously made this tool look successful while
+    nothing changed. Use the dedicated ``account_move`` tool to reassign an
+    account to a different profile.
 
     Args:
         account_id: The account to update.
-        settings: Dictionary of settings to update.
+        settings: Dictionary of settings to update. ``profileId`` is rejected
+            with an actionable error — call ``account_move`` instead.
     """
+    if not isinstance(settings, dict):
+        return error("'settings' must be an object/dictionary of fields to update.")
+    if "profileId" in settings or "profile_id" in settings:
+        return error(
+            "accounts_update does not change profile assignment "
+            "(the Zernio settings endpoint silently ignores 'profileId' — see CDI-1056). "
+            "Use account_move(account_id, target_profile_id) instead."
+        )
     try:
         result = await client().put(f"/v1/accounts/{account_id}", settings)
+        cache_invalidate("accounts_list")
+        return result
+    except ZernioAPIError as e:
+        return error(e.message)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+async def account_move(account_id: str, target_profile_id: str) -> dict:
+    """[social] Move a connected account to a different brand profile.
+
+    Reassigns the account's ``profileId`` via the dedicated move endpoint.
+    Use this instead of ``accounts_update`` when changing profile assignment
+    (see CDI-1061 / CDI-1056) — the settings update endpoint silently
+    ignores ``profileId`` changes.
+
+    Args:
+        account_id: The account to move.
+        target_profile_id: Destination profile ID (from ``profiles_list``).
+    """
+    if not account_id or not target_profile_id:
+        return error("account_move requires both 'account_id' and 'target_profile_id'.")
+    try:
+        # Try the dedicated move endpoint first; fall back to a PATCH on the
+        # account resource for backends that don't expose the move action.
+        try:
+            result = await client().post(
+                f"/v1/accounts/{account_id}/move",
+                {"profileId": target_profile_id},
+            )
+        except ZernioAPIError as exc:
+            if exc.status_code in (404, 405):
+                result = await client().patch(
+                    f"/v1/accounts/{account_id}",
+                    {"profileId": target_profile_id},
+                )
+            else:
+                raise
         cache_invalidate("accounts_list")
         return result
     except ZernioAPIError as e:
