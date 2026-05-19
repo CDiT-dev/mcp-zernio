@@ -316,7 +316,14 @@ def _extract_recreate_body(post: dict, scheduled_for: str) -> dict:
         # fields that posts_create expects: platform, accountId,
         # platformSpecificData (incl. threadItems).
         platform = entry.get("platform")
-        account = entry.get("accountId") or entry.get("account_id")
+        # On GET, Zernio populates accountId as a subdocument
+        # ({"_id": "...", "platform": ..., ...}). posts_create requires a
+        # bare ObjectId string — extract it.
+        account_raw = entry.get("accountId") or entry.get("account_id")
+        if isinstance(account_raw, dict):
+            account = account_raw.get("_id")
+        else:
+            account = account_raw
         if not platform or not account:
             continue
         cleaned: dict = {"platform": platform, "accountId": account}
