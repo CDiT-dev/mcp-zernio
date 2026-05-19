@@ -317,6 +317,55 @@ async def test_posts_schedule_promotes_draft_via_recreate():
 
 @respx.mock
 @pytest.mark.asyncio
+async def test_posts_schedule_unwraps_populated_account_id():
+    """CDI-1004 follow-up: Zernio's GET populates accountId as a subdocument.
+
+    posts_create requires a bare ObjectId string for accountId, so the
+    recreate body must extract `_id` when accountId is a populated dict.
+    """
+    from zernio_mcp.tools.posts import posts_schedule
+    respx.get(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "post": {
+                    "_id": "post1",
+                    "status": "draft",
+                    "content": "hi",
+                    "platforms": [
+                        {
+                            "platform": "bluesky",
+                            # GET-populated subdoc, not a bare ID.
+                            "accountId": {
+                                "_id": "acc_real_id",
+                                "platform": "bluesky",
+                                "displayName": "user.bsky.social",
+                            },
+                        }
+                    ],
+                }
+            },
+        )
+    )
+    post_route = respx.post(f"{API}/v1/posts").mock(
+        return_value=httpx.Response(
+            200, json={"post": {"_id": "post1_NEW", "status": "scheduled"}}
+        )
+    )
+    respx.delete(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={"deleted": True})
+    )
+
+    await posts_schedule(post_id="post1", scheduled_for="2027-06-01T09:00:00Z")
+
+    sent = json.loads(post_route.calls.last.request.content)
+    assert sent["platforms"] == [
+        {"platform": "bluesky", "accountId": "acc_real_id"}
+    ]
+
+
+@respx.mock
+@pytest.mark.asyncio
 async def test_posts_schedule_reschedules_already_scheduled_in_place():
     """CDI-1004 follow-up: already-scheduled posts get a plain PUT (no recreate, no id change)."""
     from zernio_mcp.tools.posts import posts_schedule
