@@ -33,6 +33,53 @@ async def test_queue_list_slots():
 
 @respx.mock
 @pytest.mark.asyncio
+async def test_queue_list_slots_returns_all_schedules():
+    """CDI-1058: queue_list_slots returns every schedule, not just the default."""
+    from zernio_mcp.tools.queue import queue_list_slots
+    payload = {
+        "schedules": [
+            {"_id": "s1", "name": "Default", "isDefault": True},
+            {"_id": "s2", "name": "Pro — Monday", "isDefault": False},
+            {"_id": "s3", "name": "Pro — Tuesday", "isDefault": False},
+        ]
+    }
+    route = respx.get(f"{API}/v1/queue/slots").mock(
+        return_value=httpx.Response(200, json=payload)
+    )
+    result = await queue_list_slots(profile_id="p1")
+    assert len(result["slots"]) == 3
+    ids = {s["_id"] for s in result["slots"]}
+    assert ids == {"s1", "s2", "s3"}
+    # Request should ask the backend to include every schedule.
+    assert "includeAll=true" in str(route.calls.last.request.url)
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_queue_list_slots_fallback_to_profile_endpoint():
+    """CDI-1058: when the flat endpoint still only returns the default, retry the profile-scoped endpoint."""
+    from zernio_mcp.tools.queue import queue_list_slots
+    respx.get(f"{API}/v1/queue/slots").mock(
+        return_value=httpx.Response(200, json={"slots": [{"_id": "s1", "isDefault": True}]})
+    )
+    respx.get(f"{API}/v1/profiles/p1/queue/slots").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "slots": [
+                    {"_id": "s1", "isDefault": True},
+                    {"_id": "s2", "isDefault": False},
+                    {"_id": "s3", "isDefault": False},
+                ]
+            },
+        )
+    )
+    result = await queue_list_slots(profile_id="p1")
+    assert len(result["slots"]) == 3
+
+
+@respx.mock
+@pytest.mark.asyncio
 async def test_queue_update_slot():
     from zernio_mcp.tools.queue import queue_update_slot
     respx.put(f"{API}/v1/queue/slots/s1").mock(return_value=httpx.Response(200, json={"updated": True}))
@@ -47,6 +94,127 @@ async def test_queue_delete_slot():
     respx.delete(f"{API}/v1/queue/slots/s1").mock(return_value=httpx.Response(200, json={"deleted": True}))
     result = await queue_delete_slot(slot_id="s1")
     assert result["deleted"] is True
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_queue_delete_slot_html_404_returns_clean_error():
+    """CDI-1057: HTML 404 pages must surface as structured JSON errors."""
+    from zernio_mcp.tools.queue import queue_delete_slot
+    respx.delete(f"{API}/v1/queue/slots/s2").mock(
+        return_value=httpx.Response(
+            404,
+            text="<!DOCTYPE html><html lang=\"en\"><body>Not found</body></html>",
+            headers={"content-type": "text/html; charset=utf-8"},
+        )
+    )
+    result = await queue_delete_slot(slot_id="s2")
+    assert "error" in result
+    assert "<!DOCTYPE" not in result["error"]
+    assert "<html" not in result["error"]
+    assert result["status_code"] == 404
+    assert result["slot_id"] == "s2"
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_queue_delete_slot_default_schedule_actionable_error():
+    """CDI-1062: default-schedule delete failures get a clear, actionable message."""
+    from zernio_mcp.tools.queue import queue_delete_slot
+    respx.delete(f"{API}/v1/queue/slots/sdef").mock(
+        return_value=httpx.Response(
+            400,
+            json={"message": "Default schedule cannot be deleted"},
+        )
+    )
+    result = await queue_delete_slot(slot_id="sdef")
+    assert "default" in result["error"].lower()
+    assert "promote another" in result["error"].lower()
+    assert result["status_code"] == 400
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_queue_clear_skips_default():
+    """CDI-1059: queue_clear deletes every non-default slot and reports the skipped default."""
+    from zernio_mcp.tools.queue import queue_clear
+    respx.get(f"{API}/v1/queue/slots").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "schedules": [
+                    {"_id": "s1", "isDefault": True},
+                    {"_id": "s2", "isDefault": False},
+                    {"_id": "s3", "isDefault": False},
+                ]
+            },
+        )
+    )
+    respx.delete(f"{API}/v1/queue/slots/s2").mock(return_value=httpx.Response(200, json={"deleted": True}))
+    respx.delete(f"{API}/v1/queue/slots/s3").mock(return_value=httpx.Response(200, json={"deleted": True}))
+    result = await queue_clear(profile_id="p1")
+    assert set(result["deleted"]) == {"s2", "s3"}
+    assert result["skipped_default"] == ["s1"]
+    assert result["failed"] == []
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_queue_set_schedule_atomic_rollback():
+    """CDI-1059: queue_set_schedule rolls back created slots when a later create fails."""
+    from zernio_mcp.tools.queue import queue_set_schedule
+    # Pretend the queue is empty (only the default schedule).
+    respx.get(f"{API}/v1/queue/slots").mock(
+        return_value=httpx.Response(
+            200, json={"schedules": [{"_id": "sdef", "isDefault": True}]}
+        )
+    )
+    # First two creates succeed, third fails.
+    respx.post(f"{API}/v1/queue/slots").mock(
+        side_effect=[
+            httpx.Response(200, json={"slot": {"_id": "n1"}}),
+            httpx.Response(200, json={"slot": {"_id": "n2"}}),
+            httpx.Response(400, json={"message": "duplicate name"}),
+        ]
+    )
+    # Rollback deletes the two successful ones.
+    respx.delete(f"{API}/v1/queue/slots/n1").mock(return_value=httpx.Response(200, json={"deleted": True}))
+    respx.delete(f"{API}/v1/queue/slots/n2").mock(return_value=httpx.Response(200, json={"deleted": True}))
+
+    result = await queue_set_schedule(
+        profile_id="p1",
+        slots=[
+            {"day": "monday", "time": "09:00", "platform": "twitter"},
+            {"day": "tuesday", "time": "10:00", "platform": "twitter"},
+            {"day": "wednesday", "time": "11:00", "platform": "twitter"},
+        ],
+        replace=False,
+    )
+    assert "error" in result
+    assert set(result["rolled_back"]) == {"n1", "n2"}
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_queue_set_schedule_happy_path():
+    """CDI-1059: queue_set_schedule applies every slot and reports the created IDs."""
+    from zernio_mcp.tools.queue import queue_set_schedule
+    respx.post(f"{API}/v1/queue/slots").mock(
+        side_effect=[
+            httpx.Response(200, json={"slot": {"_id": "n1"}}),
+            httpx.Response(200, json={"slot": {"_id": "n2"}}),
+        ]
+    )
+    result = await queue_set_schedule(
+        profile_id="p1",
+        slots=[
+            {"day": "monday", "time": "09:00", "platform": "twitter"},
+            {"day": "tuesday", "time": "10:00", "platform": "linkedin"},
+        ],
+        replace=False,
+    )
+    assert "error" not in result
+    assert [c["slot_id"] for c in result["created"]] == ["n1", "n2"]
 
 
 @respx.mock

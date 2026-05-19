@@ -32,6 +32,24 @@ class ZernioAPIError(Exception):
         super().__init__(message)
 
 
+def _sanitize_error_text(raw: str) -> str:
+    """Collapse an HTML/text error body into a short, MCP-safe single-line message.
+
+    Zernio's upstream sometimes returns Next.js HTML error pages (notably on 404
+    for non-default queue-slot deletes — see CDI-1057). We never want to forward
+    raw markup to MCP clients: it bloats the response, leaks framework details,
+    and is impossible to display sensibly.
+    """
+    if not raw:
+        return "no response body"
+    stripped = raw.strip()
+    if stripped.startswith("<") or "<!DOCTYPE" in stripped[:50].upper():
+        return "upstream returned an HTML error page (no JSON body)"
+    # Plain text — keep first line, truncate.
+    first_line = stripped.splitlines()[0]
+    return first_line[:200]
+
+
 class SSRFError(Exception):
     """Raised when a URL fails SSRF validation."""
 
@@ -164,11 +182,22 @@ class ZernioClient:
                     continue
 
                 if resp.status_code >= 400:
-                    try:
-                        body = resp.json()
-                        msg = body.get("message", body.get("error", resp.text[:200]))
-                    except Exception:
-                        msg = resp.text[:200]
+                    content_type = resp.headers.get("content-type", "")
+                    raw_text = resp.text or ""
+                    msg: str
+                    if "application/json" in content_type:
+                        try:
+                            body = resp.json()
+                            if isinstance(body, dict):
+                                msg = body.get("message") or body.get("error") or _sanitize_error_text(raw_text)
+                            else:
+                                msg = _sanitize_error_text(raw_text)
+                        except Exception:
+                            msg = _sanitize_error_text(raw_text)
+                    else:
+                        # Upstream returned HTML (e.g., Next.js error page on 404)
+                        # or plain text — never surface raw markup to MCP clients.
+                        msg = _sanitize_error_text(raw_text)
                     raise ZernioAPIError(
                         f"Zernio API error ({resp.status_code}): {msg}",
                         status_code=resp.status_code,
