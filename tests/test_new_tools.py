@@ -239,6 +239,73 @@ async def test_posts_update():
 
 @respx.mock
 @pytest.mark.asyncio
+async def test_posts_update_promotes_draft_to_scheduled():
+    """CDI-1004: scheduled_for on a draft must include the status transition."""
+    from zernio_mcp.tools.posts import posts_update
+    respx.get(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={"post": {"_id": "post1", "status": "draft"}})
+    )
+    put_route = respx.put(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(
+            200, json={"post": {"_id": "post1", "status": "scheduled"}}
+        )
+    )
+    await posts_update(post_id="post1", scheduled_for="2026-06-01T09:00:00Z")
+    sent = json.loads(put_route.calls.last.request.content)
+    assert sent.get("status") == "scheduled"
+    assert sent.get("scheduledFor") == "2026-06-01T09:00:00Z"
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_update_keeps_scheduled_status_on_reschedule():
+    """CDI-1004: rescheduling an already-scheduled post must NOT inject a status field."""
+    from zernio_mcp.tools.posts import posts_update
+    respx.get(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={"post": {"_id": "post1", "status": "scheduled"}})
+    )
+    put_route = respx.put(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={"post": {"_id": "post1", "status": "scheduled"}})
+    )
+    await posts_update(post_id="post1", scheduled_for="2026-06-02T09:00:00Z")
+    sent = json.loads(put_route.calls.last.request.content)
+    assert "status" not in sent
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_schedule_promotes_draft():
+    """CDI-1004: posts_schedule sets status=scheduled and scheduledFor."""
+    from zernio_mcp.tools.posts import posts_schedule
+    respx.get(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(200, json={"post": {"_id": "post1", "status": "draft"}})
+    )
+    put_route = respx.put(f"{API}/v1/posts/post1").mock(
+        return_value=httpx.Response(
+            200, json={"post": {"_id": "post1", "status": "scheduled"}}
+        )
+    )
+    result = await posts_schedule(post_id="post1", scheduled_for="2026-06-03T09:00:00Z")
+    assert result["post"]["status"] == "scheduled"
+    sent = json.loads(put_route.calls.last.request.content)
+    assert sent == {"scheduledFor": "2026-06-03T09:00:00Z", "status": "scheduled"}
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_posts_schedule_rejects_published():
+    """CDI-1004: scheduling a published post is rejected with a clear error."""
+    from zernio_mcp.tools.posts import posts_schedule
+    respx.get(f"{API}/v1/posts/p2").mock(
+        return_value=httpx.Response(200, json={"post": {"_id": "p2", "status": "published"}})
+    )
+    result = await posts_schedule(post_id="p2", scheduled_for="2026-06-03T09:00:00Z")
+    assert "error" in result
+    assert "published" in result["error"].lower()
+
+
+@respx.mock
+@pytest.mark.asyncio
 async def test_posts_bulk_upload():
     from zernio_mcp.tools.posts import posts_bulk_upload
     respx.post(f"{API}/v1/posts/bulk-upload").mock(return_value=httpx.Response(200, json={"created": 5, "failed": 0}))

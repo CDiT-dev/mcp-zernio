@@ -245,12 +245,21 @@ async def posts_update(
 
     Only draft and scheduled posts can be edited. Published posts cannot be modified.
 
+    ## Draft → scheduled transition (CDI-1004)
+
+    Passing ``scheduled_for`` on a *draft* now promotes the post to
+    ``status: "scheduled"`` in the same call, so the scheduler picks it up.
+    Earlier versions stored the new timestamp but left the post as a draft,
+    causing it to never auto-publish. If you only need to reschedule an
+    already-scheduled post, the status stays ``"scheduled"``.
+
     Args:
         post_id: The post to update.
         content: New post text content.
         platforms: Updated platform targets.
         media_items: Media attachments.
-        scheduled_for: New scheduled datetime (ISO 8601).
+        scheduled_for: New scheduled datetime (ISO 8601). On a draft post this
+            also flips the status to "scheduled".
     """
     try:
         body: dict = {}
@@ -262,8 +271,52 @@ async def posts_update(
             body["mediaItems"] = [m.model_dump() for m in media_items]
         if scheduled_for is not None:
             body["scheduledFor"] = scheduled_for
+            # CDI-1004: the Zernio API stores scheduledFor without flipping
+            # the post out of draft, so the scheduler never picks it up. Look
+            # the current state up and include an explicit status transition
+            # when promoting a draft.
+            try:
+                current = await client().get(f"/v1/posts/{post_id}")
+                current_status = (current.get("post") or current).get("status", "")
+                if current_status == "draft":
+                    body["status"] = "scheduled"
+            except ZernioAPIError:
+                # If the read fails (e.g. 404), let the PUT surface the error.
+                pass
         return await client().put(f"/v1/posts/{post_id}", body)
     except ZernioAPIError as e:
+        return error(e.message)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
+    """[social] Promote a draft post to scheduled at the given ISO 8601 datetime.
+
+    Dedicated tool for the draft → scheduled transition documented in
+    CDI-1004. Equivalent to ``posts_update(post_id, scheduled_for=...)`` on a
+    draft, but explicit about intent and rejects already-published posts with
+    a clear error.
+
+    Args:
+        post_id: The draft post to schedule.
+        scheduled_for: ISO 8601 datetime to publish at (e.g. "2026-04-01T09:00:00Z").
+    """
+    if not scheduled_for:
+        return error("posts_schedule requires 'scheduled_for' (ISO 8601 datetime).")
+    try:
+        current = await client().get(f"/v1/posts/{post_id}")
+        status = (current.get("post") or current).get("status", "")
+        if status == "published":
+            return error("Cannot schedule a published post. Use posts_create for a new post.")
+        if status == "failed":
+            return error("Cannot schedule a failed post. Inspect with posts_get and use posts_retry instead.")
+        return await client().put(
+            f"/v1/posts/{post_id}",
+            {"scheduledFor": scheduled_for, "status": "scheduled"},
+        )
+    except ZernioAPIError as e:
+        if e.status_code == 404:
+            return error(f"Post {post_id} not found.")
         return error(e.message)
 
 
