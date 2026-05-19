@@ -84,9 +84,27 @@ async def test_posts_bulk_upload():
 @pytest.mark.asyncio
 async def test_validate_post_length():
     from zernio_mcp.tools.validation import validate_post_length
-    respx.post(f"{API}/v1/tools/validate/post-length").mock(return_value=httpx.Response(200, json={"valid": True, "remaining": 200}))
+    route = respx.post(f"{API}/v1/tools/validate/post-length").mock(
+        return_value=httpx.Response(200, json={"valid": True, "remaining": 200})
+    )
+    result = await validate_post_length(text="Hello", platform="twitter")
+    assert result["valid"] is True
+    sent = json.loads(route.calls.last.request.content)
+    assert sent == {"text": "Hello", "platform": "twitter"}
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_validate_post_length_legacy_content_alias():
+    """CDI-906: legacy callers passing ``content=`` still work; we forward as ``text``."""
+    from zernio_mcp.tools.validation import validate_post_length
+    route = respx.post(f"{API}/v1/tools/validate/post-length").mock(
+        return_value=httpx.Response(200, json={"valid": True, "remaining": 200})
+    )
     result = await validate_post_length(content="Hello", platform="twitter")
     assert result["valid"] is True
+    sent = json.loads(route.calls.last.request.content)
+    assert sent == {"text": "Hello", "platform": "twitter"}
 
 
 @respx.mock
