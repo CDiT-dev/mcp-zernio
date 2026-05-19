@@ -50,6 +50,22 @@ async def posts_create(
       - Immediate: publish_now=True
       - Scheduled: scheduled_for="2026-04-01T09:00:00Z" (ISO 8601)
 
+    ## Supported platforms (CDI-1063)
+
+    Pass platform identifiers in each ``platforms`` entry: ``twitter``,
+    ``bluesky``, ``linkedin``, ``facebook``, ``instagram``, ``threads``,
+    ``tiktok``, ``youtube``, ``pinterest``, ``reddit``. Platform quirks:
+
+    * ``facebook`` posts publish to the Page configured on the connected
+      account; personal Facebook profiles are not supported.
+    * ``linkedin`` accounts can be personal or organization — the connected
+      account decides which.
+    * ``instagram`` and ``tiktok`` require at least one media item; text-only
+      posts are rejected by those platforms.
+    * ``youtube`` requires a video media item.
+    * Character limits vary widely — run ``validate_post_length`` /
+      ``validate_post`` first to avoid platform-specific 400s.
+
     ## Single post
     Pass content with your text. Optionally attach media_items.
 

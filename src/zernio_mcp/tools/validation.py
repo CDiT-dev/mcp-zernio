@@ -57,6 +57,16 @@ async def validate_post(
     Validates everything before posting — character limits, media dimensions,
     platform-specific requirements. Returns per-platform validation results.
 
+    ## Supported platforms (CDI-1063)
+
+    Each entry in ``platforms`` must include ``platform`` and ``accountId``.
+    Supported platform identifiers: ``twitter``, ``bluesky``, ``linkedin``,
+    ``facebook``, ``instagram``, ``threads``, ``tiktok``, ``youtube``,
+    ``pinterest``, ``reddit``. Validation enforces per-platform quirks such
+    as Instagram/TikTok's media requirement, YouTube's video-only rule, and
+    each platform's character limit (Twitter 280, Bluesky 300, LinkedIn
+    3000, Threads 500, etc.).
+
     Args:
         content: Post text content.
         platforms: Platform targets (same format as posts_create).
