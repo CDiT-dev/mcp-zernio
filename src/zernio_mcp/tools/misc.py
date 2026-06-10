@@ -6,12 +6,14 @@ from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
 from zernio_mcp.client import ZernioAPIError
+from zernio_mcp.models import UsageStats
 from zernio_mcp.tools._common import client, error
 
 
 @mcp.tool(
     title="Usage stats",
     tags={"social", "read"},
+    output_schema=UsageStats.model_json_schema(),
     annotations=ToolAnnotations(title="Usage stats", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
 )
 async def usage_stats() -> dict:

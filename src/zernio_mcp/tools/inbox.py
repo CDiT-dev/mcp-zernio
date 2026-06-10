@@ -7,12 +7,14 @@ from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
 from zernio_mcp.client import ZernioAPIError
+from zernio_mcp.models import InboxConversation, InboxConversationList
 from zernio_mcp.tools._common import client, error
 
 
 @mcp.tool(
     title="List inbox conversations",
     tags={"social", "inbox", "read"},
+    output_schema=InboxConversationList.model_json_schema(),
     annotations=ToolAnnotations(
         title="List inbox conversations",
         readOnlyHint=True,
@@ -37,6 +39,7 @@ async def inbox_list(platform: str | None = None, status: str | None = None, lim
 @mcp.tool(
     title="Get conversation with messages",
     tags={"social", "inbox", "read"},
+    output_schema=InboxConversation.model_json_schema(),
     annotations=ToolAnnotations(
         title="Get conversation with messages",
         readOnlyHint=True,
