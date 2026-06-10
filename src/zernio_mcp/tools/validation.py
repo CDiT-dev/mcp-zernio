@@ -9,7 +9,16 @@ from zernio_mcp.client import ZernioAPIError
 from zernio_mcp.tools._common import client, error
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Validate post length",
+    tags={"social", "validation", "read"},
+    annotations=ToolAnnotations(
+        title="Validate post length",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def validate_post_length(
     text: str | None = None,
     platform: str = "",
@@ -46,7 +55,16 @@ async def validate_post_length(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Validate full post",
+    tags={"social", "validation", "read"},
+    annotations=ToolAnnotations(
+        title="Validate full post",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def validate_post(
     content: str,
     platforms: list[dict],
@@ -81,7 +99,16 @@ async def validate_post(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Validate media",
+    tags={"social", "validation", "media", "read"},
+    annotations=ToolAnnotations(
+        title="Validate media",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def validate_media(media_url: str, platform: str) -> dict:
     """[social] Validate media dimensions, format, and size against platform requirements.
 

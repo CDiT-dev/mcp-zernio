@@ -9,7 +9,11 @@ from zernio_mcp.client import ZernioAPIError
 from zernio_mcp.tools._common import client, error
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Comments list",
+    tags={"social", "comments", "read"},
+    annotations=ToolAnnotations(title="Comments list", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def comments_list(
     post_id: str | None = None,
     platform: str | None = None,
@@ -30,7 +34,11 @@ async def comments_list(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Comments reply",
+    tags={"social", "comments", "write"},
+    annotations=ToolAnnotations(title="Comments reply", readOnlyHint=False, idempotentHint=False, openWorldHint=True),
+)
 async def comments_reply(post_id: str, comment_id: str, content: str) -> dict:
     """[social] Reply to a comment. Confirm reply content with the user before sending.
 
@@ -47,7 +55,11 @@ async def comments_reply(post_id: str, comment_id: str, content: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Comments delete",
+    tags={"social", "comments", "write"},
+    annotations=ToolAnnotations(title="Comments delete", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def comments_delete(post_id: str, comment_id: str) -> dict:
     """[social] Delete a comment.
 
@@ -61,7 +73,11 @@ async def comments_delete(post_id: str, comment_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Comments hide",
+    tags={"social", "comments", "write"},
+    annotations=ToolAnnotations(title="Comments hide", readOnlyHint=False, idempotentHint=True, openWorldHint=True),
+)
 async def comments_hide(post_id: str, comment_id: str) -> dict:
     """[social] Hide a comment from public view.
 
@@ -75,7 +91,11 @@ async def comments_hide(post_id: str, comment_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Comments like",
+    tags={"social", "comments", "write"},
+    annotations=ToolAnnotations(title="Comments like", readOnlyHint=False, idempotentHint=False, openWorldHint=True),
+)
 async def comments_like(post_id: str, comment_id: str) -> dict:
     """[social] Like a comment.
 
@@ -89,7 +109,11 @@ async def comments_like(post_id: str, comment_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Comments private reply",
+    tags={"social", "comments", "write"},
+    annotations=ToolAnnotations(title="Comments private reply", readOnlyHint=False, idempotentHint=False, openWorldHint=True),
+)
 async def comments_private_reply(post_id: str, comment_id: str, content: str) -> dict:
     """[social] Send a private reply to a commenter. Confirm with user before sending.
 

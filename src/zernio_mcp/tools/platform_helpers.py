@@ -11,7 +11,11 @@ from zernio_mcp.tools._common import client, error
 
 # --- Reddit ---
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Reddit search",
+    tags={"social", "reddit", "read"},
+    annotations=ToolAnnotations(title="Reddit search", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def reddit_search(query: str, subreddit: str | None = None, limit: int = 20) -> dict:
     """[social] Search Reddit posts.
 
@@ -26,7 +30,11 @@ async def reddit_search(query: str, subreddit: str | None = None, limit: int = 2
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Reddit feed",
+    tags={"social", "reddit", "read"},
+    annotations=ToolAnnotations(title="Reddit feed", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def reddit_feed(subreddit: str, limit: int = 20) -> dict:
     """[social] Get a subreddit's feed (recent posts).
 
@@ -40,7 +48,11 @@ async def reddit_feed(subreddit: str, limit: int = 20) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Reddit subreddits",
+    tags={"social", "reddit", "read"},
+    annotations=ToolAnnotations(title="Reddit subreddits", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def reddit_subreddits(account_id: str) -> dict:
     """[social] List the user's joined subreddits. Call this before reddit_flairs to find subreddit names.
 
@@ -59,7 +71,11 @@ async def reddit_subreddits(account_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Reddit flairs",
+    tags={"social", "reddit", "read"},
+    annotations=ToolAnnotations(title="Reddit flairs", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def reddit_flairs(account_id: str, subreddit: str) -> dict:
     """[social] Get available flairs for a subreddit. Call reddit_subreddits first to find subreddit names.
 
@@ -81,7 +97,11 @@ async def reddit_flairs(account_id: str, subreddit: str) -> dict:
 
 # --- LinkedIn ---
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Linkedin mentions",
+    tags={"social", "linkedin", "read"},
+    annotations=ToolAnnotations(title="Linkedin mentions", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def linkedin_mentions(account_id: str) -> dict:
     """[social] Get recent LinkedIn mentions of the user or organization.
 
@@ -94,7 +114,11 @@ async def linkedin_mentions(account_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Linkedin org analytics",
+    tags={"social", "linkedin", "read"},
+    annotations=ToolAnnotations(title="Linkedin org analytics", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def linkedin_org_analytics(account_id: str) -> dict:
     """[social] Get LinkedIn organization analytics — follower growth, impressions, engagement.
 
@@ -115,7 +139,11 @@ async def linkedin_org_analytics(account_id: str) -> dict:
 
 # --- Pinterest ---
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Pinterest boards",
+    tags={"social", "pinterest", "read"},
+    annotations=ToolAnnotations(title="Pinterest boards", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def pinterest_boards(account_id: str) -> dict:
     """[social] List Pinterest boards with names and pin counts.
 
@@ -136,7 +164,11 @@ async def pinterest_boards(account_id: str) -> dict:
 
 # --- YouTube ---
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Youtube playlists",
+    tags={"social", "youtube", "read"},
+    annotations=ToolAnnotations(title="Youtube playlists", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def youtube_playlists(account_id: str) -> dict:
     """[social] List YouTube playlists with titles and video counts.
 

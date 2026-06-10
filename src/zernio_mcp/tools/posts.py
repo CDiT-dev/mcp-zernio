@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
+from fastmcp import Context
 from pydantic import BaseModel, Field
 from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
 from zernio_mcp.client import ZernioAPIError
+from zernio_mcp.models import PostList, PostResult
 from zernio_mcp.tools._common import client, error
 
 
@@ -33,7 +35,17 @@ class ThreadItem(BaseModel):
 _THREAD_PLATFORMS = {"twitter", "bluesky"}
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Create post or thread",
+    tags={"social", "posts", "write"},
+    output_schema=PostResult.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="Create post or thread",
+        readOnlyHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    ),
+)
 async def posts_create(
     content: str | None = None,
     platforms: list[dict] | None = None,
@@ -169,7 +181,17 @@ async def posts_create(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Get post by id",
+    tags={"social", "posts", "read"},
+    output_schema=PostResult.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="Get post by id",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def posts_get(post_id: str) -> dict:
     """[social] Get a single post by ID, including status, platformPostUrl, and failure_reason.
 
@@ -182,7 +204,17 @@ async def posts_get(post_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="List posts",
+    tags={"social", "posts", "read"},
+    output_schema=PostList.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="List posts",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def posts_list(
     status: Literal["draft", "scheduled", "published", "failed"] | None = None,
     platform: str | None = None,
@@ -206,7 +238,17 @@ async def posts_list(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Delete draft/scheduled post",
+    tags={"social", "posts", "write"},
+    annotations=ToolAnnotations(
+        title="Delete draft/scheduled post",
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def posts_delete(post_id: str) -> dict:
     """[social] Delete a draft or scheduled post. For published posts, use posts_unpublish."""
     try:
@@ -222,7 +264,17 @@ async def posts_delete(post_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Unpublish post",
+    tags={"social", "posts", "write"},
+    annotations=ToolAnnotations(
+        title="Unpublish post",
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def posts_unpublish(post_id: str) -> dict:
     """[social] Remove a published post from the platform. For drafts, use posts_delete."""
     try:
@@ -240,7 +292,17 @@ async def posts_unpublish(post_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Retry failed post",
+    tags={"social", "posts", "write"},
+    output_schema=PostResult.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="Retry failed post",
+        readOnlyHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    ),
+)
 async def posts_retry(post_id: str) -> dict:
     """[social] Retry a failed post. Call posts_get first to check failure_reason."""
     try:
@@ -249,7 +311,17 @@ async def posts_retry(post_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Edit draft/scheduled post",
+    tags={"social", "posts", "write"},
+    output_schema=PostResult.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="Edit draft/scheduled post",
+        readOnlyHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def posts_update(
     post_id: str,
     content: str | None = None,
@@ -348,8 +420,22 @@ def _extract_recreate_body(post: dict, scheduled_for: str) -> dict:
     return body
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
-async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
+@mcp.tool(
+    title="Schedule a draft post",
+    tags={"social", "posts", "write"},
+    output_schema=PostResult.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="Schedule a draft post",
+        readOnlyHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    ),
+)
+async def posts_schedule(
+    post_id: str,
+    scheduled_for: str,
+    ctx: Context | None = None,
+) -> dict:
     """[social] Promote a draft post to scheduled at the given ISO 8601 datetime.
 
     ## Behavior (CDI-1004 follow-up)
@@ -378,10 +464,14 @@ async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
     Args:
         post_id: The draft (or scheduled) post to schedule.
         scheduled_for: ISO 8601 datetime to publish at (e.g. "2026-04-01T09:00:00Z").
+        ctx: Injected by FastMCP for progress/log reporting during the
+            delete-then-recreate transition. Optional; callers never pass it.
     """
     if not scheduled_for:
         return error("posts_schedule requires 'scheduled_for' (ISO 8601 datetime).")
     try:
+        if ctx:
+            await ctx.report_progress(0, 3, "Fetching post")
         current = await client().get(f"/v1/posts/{post_id}")
         post = current.get("post") or current
         status = post.get("status", "")
@@ -392,6 +482,8 @@ async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
             return error("Cannot schedule a failed post. Inspect with posts_get and use posts_retry instead.")
         if status == "scheduled":
             # In-place reschedule works for already-scheduled posts.
+            if ctx:
+                await ctx.info(f"Post {post_id} already scheduled — rescheduling in place.")
             return await client().put(
                 f"/v1/posts/{post_id}",
                 {"scheduledFor": scheduled_for},
@@ -400,6 +492,11 @@ async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
             return error(f"Cannot schedule post with status {status!r}.")
 
         # Draft → scheduled requires delete-then-recreate.
+        if ctx:
+            await ctx.info(
+                f"Promoting draft {post_id} to scheduled via delete-then-recreate "
+                "(the post id will change)."
+            )
         recreate_body = _extract_recreate_body(post, scheduled_for)
         if not recreate_body.get("platforms"):
             return error(
@@ -407,6 +504,8 @@ async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
                 "posts_update to add platforms first, then retry."
             )
 
+        if ctx:
+            await ctx.report_progress(1, 3, "Recreating post with scheduledFor")
         created = await client().post("/v1/posts", recreate_body)
         new_post = created.get("post") or created
         new_id = new_post.get("_id")
@@ -414,10 +513,17 @@ async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
             return error("Recreate returned no post id — refusing to delete the original.")
 
         # Recreate succeeded — now safe to delete the original draft.
+        if ctx:
+            await ctx.report_progress(2, 3, "Deleting original draft")
         try:
             await client().delete(f"/v1/posts/{post_id}")
         except ZernioAPIError as delete_err:
             # New post exists; original couldn't be deleted. Surface both.
+            if ctx:
+                await ctx.warning(
+                    f"New scheduled post {new_id} created, but original draft "
+                    f"{post_id} could not be deleted: {delete_err.message}"
+                )
             return {
                 **created,
                 "previous_post_id": post_id,
@@ -429,6 +535,8 @@ async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
                 ),
             }
 
+        if ctx:
+            await ctx.report_progress(3, 3, "Scheduled")
         return {**created, "previous_post_id": post_id}
     except ZernioAPIError as e:
         if e.status_code == 404:
@@ -436,8 +544,17 @@ async def posts_schedule(post_id: str, scheduled_for: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
-async def posts_bulk_upload(csv_content: str) -> dict:
+@mcp.tool(
+    title="Bulk import posts from CSV",
+    tags={"social", "posts", "write", "bulk"},
+    annotations=ToolAnnotations(
+        title="Bulk import posts from CSV",
+        readOnlyHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    ),
+)
+async def posts_bulk_upload(csv_content: str, ctx: Context | None = None) -> dict:
     """[social] Import multiple posts from CSV data.
 
     Use for 5 or more posts at once. For fewer posts, use posts_create individually.
@@ -445,8 +562,17 @@ async def posts_bulk_upload(csv_content: str) -> dict:
 
     Args:
         csv_content: CSV string with post data (headers: content, platform, scheduledFor, etc.).
+        ctx: Injected by FastMCP for progress/log reporting. Optional; callers
+            never pass it.
     """
     try:
-        return await client().post("/v1/posts/bulk-upload", {"csv": csv_content})
+        if ctx:
+            row_count = max(csv_content.count("\n") - 1, 0)
+            await ctx.info(f"Uploading CSV with ~{row_count} post rows to Zernio.")
+            await ctx.report_progress(0, 1, "Importing CSV")
+        result = await client().post("/v1/posts/bulk-upload", {"csv": csv_content})
+        if ctx:
+            await ctx.report_progress(1, 1, "Import complete")
+        return result
     except ZernioAPIError as e:
         return error(e.message)

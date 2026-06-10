@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from fastmcp import Context
 from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
@@ -9,7 +10,16 @@ from zernio_mcp.client import ZernioAPIError
 from zernio_mcp.tools._common import client, error
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="List inbox conversations",
+    tags={"social", "inbox", "read"},
+    annotations=ToolAnnotations(
+        title="List inbox conversations",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def inbox_list(platform: str | None = None, status: str | None = None, limit: int = 20) -> dict:
     """[social] List conversations (DMs) across platforms.
 
@@ -24,7 +34,16 @@ async def inbox_list(platform: str | None = None, status: str | None = None, lim
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Get conversation with messages",
+    tags={"social", "inbox", "read"},
+    annotations=ToolAnnotations(
+        title="Get conversation with messages",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def inbox_get_conversation(
     conversation_id: str,
     account_id: str | None = None,
@@ -67,7 +86,16 @@ async def inbox_get_conversation(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Update conversation status",
+    tags={"social", "inbox", "write"},
+    annotations=ToolAnnotations(
+        title="Update conversation status",
+        readOnlyHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def inbox_update(conversation_id: str, status: str) -> dict:
     """[social] Update conversation metadata (e.g., mark as read, archive).
 
@@ -81,8 +109,21 @@ async def inbox_update(conversation_id: str, status: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
-async def inbox_messages_send(conversation_id: str, content: str) -> dict:
+@mcp.tool(
+    title="Send a DM reply",
+    tags={"social", "inbox", "write"},
+    annotations=ToolAnnotations(
+        title="Send a DM reply",
+        readOnlyHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    ),
+)
+async def inbox_messages_send(
+    conversation_id: str,
+    content: str,
+    ctx: Context | None = None,
+) -> dict:
     """[social] Send a reply in a conversation.
 
     Disambiguation: For social media DMs/inbox → zernio. For live-chat/CRM messages → watermelon.
@@ -93,14 +134,29 @@ async def inbox_messages_send(conversation_id: str, content: str) -> dict:
     Args:
         conversation_id: The conversation to reply in.
         content: Message text.
+        ctx: Injected by FastMCP for logging. Optional; callers never pass it.
     """
     try:
+        if ctx:
+            await ctx.info(
+                f"Sending a real DM ({len(content)} chars) in conversation "
+                f"{conversation_id}. Make sure the user confirmed the wording."
+            )
         return await client().post(f"/v1/inbox/conversations/{conversation_id}/messages", {"content": content})
     except ZernioAPIError as e:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Edit sent message",
+    tags={"social", "inbox", "write"},
+    annotations=ToolAnnotations(
+        title="Edit sent message",
+        readOnlyHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def inbox_message_edit(conversation_id: str, message_id: str, content: str) -> dict:
     """[social] Edit a sent message.
 
@@ -118,7 +174,17 @@ async def inbox_message_edit(conversation_id: str, message_id: str, content: str
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Delete message",
+    tags={"social", "inbox", "write"},
+    annotations=ToolAnnotations(
+        title="Delete message",
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def inbox_message_delete(conversation_id: str, message_id: str) -> dict:
     """[social] Delete a message from a conversation.
 

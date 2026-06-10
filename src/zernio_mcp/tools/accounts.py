@@ -8,10 +8,21 @@ from zernio_mcp.server import mcp
 from zernio_mcp.client import (
     ZernioAPIError, cache_get, cache_set, cache_invalidate, strip_pii,
 )
+from zernio_mcp.models import AccountList
 from zernio_mcp.tools._common import client, error
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="List connected accounts",
+    tags={"social", "accounts", "read"},
+    output_schema=AccountList.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="List connected accounts",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def accounts_list() -> dict:
     """[social] List all connected social media accounts.
 
@@ -31,7 +42,17 @@ async def accounts_list() -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Check account token health",
+    tags={"social", "accounts", "read"},
+    output_schema=AccountList.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="Check account token health",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def accounts_health(account_id: str | None = None) -> dict:
     """[social] Check token health and expiry status for connected accounts.
 
@@ -61,7 +82,16 @@ async def accounts_health(account_id: str | None = None) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Update account settings",
+    tags={"social", "accounts", "write"},
+    annotations=ToolAnnotations(
+        title="Update account settings",
+        readOnlyHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def accounts_update(account_id: str, settings: dict) -> dict:
     """[social] Update account settings (display name, username, etc.).
 
@@ -92,7 +122,16 @@ async def accounts_update(account_id: str, settings: dict) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Move account to another profile",
+    tags={"social", "accounts", "write"},
+    annotations=ToolAnnotations(
+        title="Move account to another profile",
+        readOnlyHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def account_move(account_id: str, target_profile_id: str) -> dict:
     """[social] Move a connected account to a different brand profile.
 
@@ -129,7 +168,17 @@ async def account_move(account_id: str, target_profile_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Disconnect account",
+    tags={"social", "accounts", "write"},
+    annotations=ToolAnnotations(
+        title="Disconnect account",
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def accounts_delete(account_id: str) -> dict:
     """[social] Disconnect a social media account from Zernio.
 
@@ -146,7 +195,16 @@ async def accounts_delete(account_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Follower count trends",
+    tags={"social", "accounts", "analytics", "read"},
+    annotations=ToolAnnotations(
+        title="Follower count trends",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def accounts_follower_stats() -> dict:
     """[social] Get follower count trends over time for all connected accounts.
 

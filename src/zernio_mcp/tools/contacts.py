@@ -9,7 +9,11 @@ from zernio_mcp.client import ZernioAPIError, cache_get, cache_set, cache_invali
 from zernio_mcp.tools._common import client, error
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Contacts list",
+    tags={"social", "contacts", "crm", "read"},
+    annotations=ToolAnnotations(title="Contacts list", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def contacts_list(query: str | None = None, limit: int = 20) -> dict:
     """[social] List contacts. Optionally search by name or identifier.
 
@@ -29,7 +33,11 @@ async def contacts_list(query: str | None = None, limit: int = 20) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Contacts create",
+    tags={"social", "contacts", "crm", "write"},
+    annotations=ToolAnnotations(title="Contacts create", readOnlyHint=False, idempotentHint=False, openWorldHint=True),
+)
 async def contacts_create(
     name: str,
     email: str | None = None,
@@ -63,7 +71,11 @@ async def contacts_create(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Contacts get",
+    tags={"social", "contacts", "crm", "read"},
+    annotations=ToolAnnotations(title="Contacts get", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def contacts_get(contact_id: str) -> dict:
     """[social] Get contact details.
 
@@ -76,7 +88,11 @@ async def contacts_get(contact_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Contacts update",
+    tags={"social", "contacts", "crm", "write"},
+    annotations=ToolAnnotations(title="Contacts update", readOnlyHint=False, idempotentHint=True, openWorldHint=True),
+)
 async def contacts_update(
     contact_id: str,
     name: str | None = None,
@@ -104,7 +120,11 @@ async def contacts_update(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Contacts delete",
+    tags={"social", "contacts", "crm", "write"},
+    annotations=ToolAnnotations(title="Contacts delete", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def contacts_delete(contact_id: str) -> dict:
     """[social] Delete a contact.
 

@@ -9,7 +9,11 @@ from zernio_mcp.client import ZernioAPIError
 from zernio_mcp.tools._common import client, error
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Usage stats",
+    tags={"social", "read"},
+    annotations=ToolAnnotations(title="Usage stats", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def usage_stats() -> dict:
     """[social] Get API usage counts, post counts, and billing information."""
     try:
@@ -18,7 +22,11 @@ async def usage_stats() -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Account groups list",
+    tags={"social", "read"},
+    annotations=ToolAnnotations(title="Account groups list", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def account_groups_list() -> dict:
     """[social] List account groups with member accounts."""
     try:
@@ -27,7 +35,11 @@ async def account_groups_list() -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Account groups create",
+    tags={"social", "write"},
+    annotations=ToolAnnotations(title="Account groups create", readOnlyHint=False, idempotentHint=False, openWorldHint=True),
+)
 async def account_groups_create(name: str, account_ids: list[str]) -> dict:
     """[social] Create an account group.
 
@@ -41,7 +53,11 @@ async def account_groups_create(name: str, account_ids: list[str]) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Account groups delete",
+    tags={"social", "write"},
+    annotations=ToolAnnotations(title="Account groups delete", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def account_groups_delete(group_id: str) -> dict:
     """[social] Delete an account group.
 
@@ -54,7 +70,11 @@ async def account_groups_delete(group_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=False))
+@mcp.tool(
+    title="Inbox get link",
+    tags={"social", "read"},
+    annotations=ToolAnnotations(title="Inbox get link", readOnlyHint=True, idempotentHint=False, openWorldHint=True),
+)
 async def inbox_get_link() -> dict:
     """[social] Get a link to open the universal inbox in your browser.
 

@@ -8,12 +8,23 @@ from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
 from zernio_mcp.client import ZernioAPIError, cache_get, cache_set
+from zernio_mcp.models import AnalyticsResult
 from zernio_mcp.tools._common import client, error
 
 _ORIGIN_MAP = {"all": "all", "via_zernio": "late", "imported": "imported"}
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Per-post engagement metrics",
+    tags={"social", "analytics", "read"},
+    output_schema=AnalyticsResult.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="Per-post engagement metrics",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def analytics_posts(
     post_id: str | None = None,
     platform: str | None = None,
@@ -38,7 +49,16 @@ async def analytics_posts(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Aggregated analytics insights",
+    tags={"social", "analytics", "read"},
+    annotations=ToolAnnotations(
+        title="Aggregated analytics insights",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def analytics_insights(
     type: Literal["best_time", "content_decay", "daily_metrics", "posting_frequency"],
     platform: str | None = None,
@@ -69,7 +89,16 @@ async def analytics_insights(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="YouTube daily views",
+    tags={"social", "analytics", "youtube", "read"},
+    annotations=ToolAnnotations(
+        title="YouTube daily views",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def analytics_youtube_daily(
     account_id: str,
     from_date: str | None = None,
@@ -91,7 +120,16 @@ async def analytics_youtube_daily(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Instagram insights + demographics",
+    tags={"social", "analytics", "instagram", "read"},
+    annotations=ToolAnnotations(
+        title="Instagram insights + demographics",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def analytics_instagram(
     account_id: str,
     include_demographics: bool = True,
