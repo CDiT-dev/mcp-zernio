@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from fastmcp import Context
 from mcp.types import ToolAnnotations
 from pydantic import HttpUrl
 
@@ -12,10 +13,20 @@ from zernio_mcp.tools._common import client, error
 from zernio_mcp.upload import create_upload_token, get_upload_result
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Upload media from URL",
+    tags={"social", "media", "write"},
+    annotations=ToolAnnotations(
+        title="Upload media from URL",
+        readOnlyHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    ),
+)
 async def media_upload(
     url: HttpUrl,
     file_name: str = "upload",
+    ctx: Context | None = None,
 ) -> dict:
     """[social] Upload media from a URL for use in posts. Returns publicUrl.
 
@@ -25,13 +36,28 @@ async def media_upload(
     If the user has a local image (e.g. pasted inline), call media_get_upload_link
     first to get a browser upload page, then use the returned publicUrl here or
     in posts_create directly.
+
+    Args:
+        url: Public HTTPS URL of the image or video to upload.
+        file_name: Base name for the stored file (extension is derived from the
+            content type).
+        ctx: Injected by FastMCP for progress/log reporting across the
+            fetch → presign → upload steps. Optional; callers never pass it.
     """
     c = client()
     try:
+        if ctx:
+            await ctx.report_progress(0, 3, "Fetching source media")
         data, content_type = await c.fetch_url_bytes(str(url))
         ext = content_type.split("/")[-1].replace("quicktime", "mov")
+        if ctx:
+            await ctx.report_progress(1, 3, "Requesting upload URL")
         presign = await c.presign_media(f"{file_name}.{ext}", content_type)
+        if ctx:
+            await ctx.report_progress(2, 3, "Uploading to storage")
         await c.upload_to_gcs(presign["uploadUrl"], data, content_type)
+        if ctx:
+            await ctx.report_progress(3, 3, "Upload complete")
         return {"publicUrl": presign["publicUrl"]}
     except SSRFError as e:
         return error(str(e))
@@ -39,7 +65,16 @@ async def media_upload(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Get browser upload link",
+    tags={"social", "media", "read"},
+    annotations=ToolAnnotations(
+        title="Get browser upload link",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=False,
+    ),
+)
 async def media_get_upload_link() -> dict:
     """[social] Get a browser upload link for images/videos.
 
@@ -59,7 +94,16 @@ async def media_get_upload_link() -> dict:
     }
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Check browser upload status",
+    tags={"social", "media", "read"},
+    annotations=ToolAnnotations(
+        title="Check browser upload status",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=False,
+    ),
+)
 async def media_check_upload(token: str) -> dict:
     """[social] Check if a browser upload has completed and get the publicUrl.
 

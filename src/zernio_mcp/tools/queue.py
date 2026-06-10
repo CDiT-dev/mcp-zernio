@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
+from fastmcp import Context
 from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
 from zernio_mcp.client import ZernioAPIError, cache_get, cache_set, cache_invalidate_prefix
+from zernio_mcp.models import QueueSlotList
 from zernio_mcp.tools._common import client, error
 
 _DAY_MAP = {
@@ -41,7 +43,17 @@ def _extract_slots(payload: Any) -> list[dict]:
     return []
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Preview upcoming queue slots",
+    tags={"social", "queue", "read"},
+    output_schema=QueueSlotList.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="Preview upcoming queue slots",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def queue_preview(profile_id: str, limit: int = 5) -> dict:
     """[social] Preview upcoming queue slots for scheduling context.
 
@@ -54,7 +66,16 @@ async def queue_preview(profile_id: str, limit: int = 5) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Create recurring queue slot",
+    tags={"social", "queue", "write"},
+    annotations=ToolAnnotations(
+        title="Create recurring queue slot",
+        readOnlyHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    ),
+)
 async def queue_create_slot(
     profile_id: str,
     name: str,
@@ -106,7 +127,17 @@ async def queue_create_slot(
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="List queue slots",
+    tags={"social", "queue", "read"},
+    output_schema=QueueSlotList.model_json_schema(),
+    annotations=ToolAnnotations(
+        title="List queue slots",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def queue_list_slots(profile_id: str | None = None) -> dict:
     """[social] List all configured recurring queue slots / schedules.
 
@@ -162,7 +193,16 @@ async def queue_list_slots(profile_id: str | None = None) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Update queue slot",
+    tags={"social", "queue", "write"},
+    annotations=ToolAnnotations(
+        title="Update queue slot",
+        readOnlyHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def queue_update_slot(slot_id: str, day: str | None = None, time: str | None = None, platform: str | None = None) -> dict:
     """[social] Update an existing queue slot.
 
@@ -187,7 +227,17 @@ async def queue_update_slot(slot_id: str, day: str | None = None, time: str | No
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Delete queue slot",
+    tags={"social", "queue", "write"},
+    annotations=ToolAnnotations(
+        title="Delete queue slot",
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def queue_delete_slot(slot_id: str) -> dict:
     """[social] Delete a recurring queue slot.
 
@@ -236,7 +286,16 @@ async def queue_delete_slot(slot_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Next open queue slot",
+    tags={"social", "queue", "read"},
+    annotations=ToolAnnotations(
+        title="Next open queue slot",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def queue_next_slot(profile_id: str) -> dict:
     """[social] Get the next available open queue slot.
 
@@ -277,8 +336,22 @@ def _slot_identifier(slot: dict) -> str | None:
     return None
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
-async def queue_clear(profile_id: str, include_default: bool = False) -> dict:
+@mcp.tool(
+    title="Clear all queue slots for a profile",
+    tags={"social", "queue", "write", "bulk"},
+    annotations=ToolAnnotations(
+        title="Clear all queue slots for a profile",
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
+async def queue_clear(
+    profile_id: str,
+    include_default: bool = False,
+    ctx: Context | None = None,
+) -> dict:
     """[social] Remove every recurring queue slot for a profile.
 
     Iterates over every schedule returned by ``queue_list_slots(profile_id)``
@@ -292,6 +365,8 @@ async def queue_clear(profile_id: str, include_default: bool = False) -> dict:
     Args:
         profile_id: Profile whose schedules to remove.
         include_default: Attempt to delete the default schedule too.
+        ctx: Injected by FastMCP for progress/log reporting. Optional; callers
+            never pass it.
     """
     listing = await queue_list_slots(profile_id=profile_id)
     if "error" in listing:
@@ -301,7 +376,13 @@ async def queue_clear(profile_id: str, include_default: bool = False) -> dict:
     failed: list[dict] = []
     skipped_default: list[str] = []
 
-    for slot in listing.get("slots", []):
+    slots = listing.get("slots", [])
+    total = len(slots)
+    if ctx and total:
+        await ctx.info(f"Clearing {total} queue slot(s) for profile {profile_id}.")
+    for idx, slot in enumerate(slots):
+        if ctx:
+            await ctx.report_progress(idx, total, "Deleting queue slots")
         slot_id = _slot_identifier(slot)
         if not slot_id:
             continue
@@ -319,6 +400,8 @@ async def queue_clear(profile_id: str, include_default: bool = False) -> dict:
                 failed.append(entry)
 
     cache_invalidate_prefix("queue_")
+    if ctx and total:
+        await ctx.report_progress(total, total, "Queue cleared")
     return {
         "deleted": deleted,
         "failed": failed,
@@ -326,12 +409,22 @@ async def queue_clear(profile_id: str, include_default: bool = False) -> dict:
     }
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Apply a full queue schedule",
+    tags={"social", "queue", "write", "bulk"},
+    annotations=ToolAnnotations(
+        title="Apply a full queue schedule",
+        readOnlyHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    ),
+)
 async def queue_set_schedule(
     profile_id: str,
     slots: list[dict],
     timezone: str = "Europe/Berlin",
     replace: bool = True,
+    ctx: Context | None = None,
 ) -> dict:
     """[social] Apply a queue schedule from a spec — optionally wiping existing slots first.
 
@@ -357,6 +450,8 @@ async def queue_set_schedule(
         slots: List of slot specs.
         timezone: IANA timezone for every slot in this batch.
         replace: When True, clear existing slots before applying.
+        ctx: Injected by FastMCP for progress/log reporting. Optional; callers
+            never pass it.
     """
     if not slots:
         return error("queue_set_schedule requires a non-empty 'slots' list.")
@@ -388,13 +483,20 @@ async def queue_set_schedule(
 
     cleared_summary: dict | None = None
     if replace:
-        cleared_summary = await queue_clear(profile_id=profile_id, include_default=False)
+        cleared_summary = await queue_clear(
+            profile_id=profile_id, include_default=False, ctx=ctx
+        )
         if "error" in cleared_summary:
             return cleared_summary
 
     created: list[dict] = []
+    total = len(normalised)
+    if ctx:
+        await ctx.info(f"Creating {total} queue slot(s) for profile {profile_id}.")
     try:
-        for spec in normalised:
+        for idx, spec in enumerate(normalised):
+            if ctx:
+                await ctx.report_progress(idx, total, "Creating queue slots")
             day_num = _DAY_MAP[spec["day"]]
             result = await client().post("/v1/queue/slots", {
                 "profileId": profile_id,
@@ -438,6 +540,8 @@ async def queue_set_schedule(
         }
 
     cache_invalidate_prefix("queue_")
+    if ctx:
+        await ctx.report_progress(total, total, "Schedule applied")
     return {
         "created": created,
         "cleared": cleared_summary,
