@@ -108,15 +108,135 @@ class PostList(BaseModel):
 
 
 class AnalyticsResult(BaseModel):
-    """Result of ``analytics_posts``.
+    """Result of the analytics read tools (``analytics_posts``,
+    ``analytics_insights``, ``analytics_instagram``).
 
-    Without a ``post_id`` this carries a ``posts`` list sorted by engagement;
-    with one it carries the timeline payload (passed through under ``extra``).
+    Analytics endpoints are deliberately heterogeneous: ``analytics_posts``
+    without a ``post_id`` carries a ``posts`` list sorted by engagement; with
+    one it carries a timeline; ``analytics_insights`` returns whichever shape
+    the requested insight produces (``bestHour``/``bestDay``, ``metrics``,
+    ``decay``…); ``analytics_instagram`` returns ``reach``/``impressions`` plus
+    an optional ``demographics`` block. Rather than enumerate every variant we
+    keep a single permissive contract: ``posts`` is surfaced as the one field
+    common enough to type, every other field passes through verbatim under
+    ``extra``, and the error path stays representable.
     """
 
     posts: list[dict[str, Any]] | None = Field(
-        default=None, description="Per-post engagement metrics."
+        default=None, description="Per-post engagement metrics (analytics_posts)."
     )
+    error: str | None = Field(default=None, description="Set when the call failed.")
+
+    model_config = ConfigDict(extra="allow")
+
+
+# ---------------------------------------------------------------------------
+# Inbox (conversations / DMs)
+# ---------------------------------------------------------------------------
+
+
+class InboxMessage(_Lenient):
+    """A single direct message within a conversation."""
+
+    id: str | None = Field(default=None, alias="_id", description="Message id.")
+    content: str | None = Field(default=None, description="Message text.")
+    createdAt: str | None = Field(default=None, description="ISO 8601 send time.")
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+
+class InboxConversation(_Lenient):
+    """Result of ``inbox_get_conversation``.
+
+    Zernio returns the conversation record at the top level (``_id``,
+    ``platform``, ``participant``, ``status`` …); the tool additionally attaches
+    the recent ``messages`` list when ``include_messages`` is true. Both the
+    conversation fields and ``messages`` are optional so the metadata-only and
+    error paths validate.
+    """
+
+    id: str | None = Field(default=None, alias="_id", description="Conversation id.")
+    platform: str | None = Field(default=None, description="Platform key.")
+    status: str | None = Field(default=None, description="e.g. 'unread', 'archived'.")
+    messages: list[InboxMessage] | None = Field(
+        default=None, description="Recent messages (when include_messages=True)."
+    )
+    error: str | None = Field(default=None, description="Set when the call failed.")
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+
+class InboxConversationList(BaseModel):
+    """Result of ``inbox_list``."""
+
+    conversations: list[InboxConversation] = Field(
+        default_factory=list, description="Matching conversations."
+    )
+    error: str | None = Field(default=None, description="Set when the call failed.")
+
+    model_config = ConfigDict(extra="allow")
+
+
+# ---------------------------------------------------------------------------
+# Comments
+# ---------------------------------------------------------------------------
+
+
+class CommentItem(_Lenient):
+    """A single comment on a post."""
+
+    id: str | None = Field(default=None, alias="_id", description="Comment id.")
+    platform: str | None = Field(default=None, description="Platform key.")
+    content: str | None = Field(default=None, description="Comment text.")
+    createdAt: str | None = Field(default=None, description="ISO 8601 time.")
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+
+class CommentList(BaseModel):
+    """Result of ``comments_list``."""
+
+    comments: list[CommentItem] = Field(
+        default_factory=list, description="Matching comments."
+    )
+    error: str | None = Field(default=None, description="Set when the call failed.")
+
+    model_config = ConfigDict(extra="allow")
+
+
+# ---------------------------------------------------------------------------
+# Activity logs
+# ---------------------------------------------------------------------------
+
+
+class LogList(BaseModel):
+    """Result of ``logs_posts``.
+
+    Zernio returns ``{"logs": [...]}``; each entry is a free-form event record,
+    so the items stay untyped dicts and pass through verbatim.
+    """
+
+    logs: list[dict[str, Any]] = Field(
+        default_factory=list, description="Activity log events."
+    )
+    error: str | None = Field(default=None, description="Set when the call failed.")
+
+    model_config = ConfigDict(extra="allow")
+
+
+# ---------------------------------------------------------------------------
+# Usage / billing
+# ---------------------------------------------------------------------------
+
+
+class UsageStats(BaseModel):
+    """Result of ``usage_stats``.
+
+    The billing/usage payload has no stable required field across plans, so the
+    contract is intentionally open: every upstream field passes through under
+    ``extra`` and only the shared error envelope is enumerated.
+    """
+
     error: str | None = Field(default=None, description="Set when the call failed.")
 
     model_config = ConfigDict(extra="allow")
