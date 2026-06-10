@@ -122,7 +122,7 @@ async def contacts_update(
 
 @mcp.tool(
     title="Contacts delete",
-    tags={"social", "contacts", "crm", "write"},
+    tags={"social", "contacts", "crm", "write", "destructive"},
     annotations=ToolAnnotations(title="Contacts delete", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True),
 )
 async def contacts_delete(contact_id: str) -> dict:

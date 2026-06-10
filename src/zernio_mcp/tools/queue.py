@@ -229,7 +229,7 @@ async def queue_update_slot(slot_id: str, day: str | None = None, time: str | No
 
 @mcp.tool(
     title="Delete queue slot",
-    tags={"social", "queue", "write"},
+    tags={"social", "queue", "write", "destructive"},
     annotations=ToolAnnotations(
         title="Delete queue slot",
         readOnlyHint=False,
@@ -338,7 +338,7 @@ def _slot_identifier(slot: dict) -> str | None:
 
 @mcp.tool(
     title="Clear all queue slots for a profile",
-    tags={"social", "queue", "write", "bulk"},
+    tags={"social", "queue", "write", "bulk", "destructive"},
     annotations=ToolAnnotations(
         title="Clear all queue slots for a profile",
         readOnlyHint=False,

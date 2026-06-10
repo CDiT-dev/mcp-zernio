@@ -72,7 +72,7 @@ async def webhooks_update(url: str | None = None, events: list[str] | None = Non
 
 @mcp.tool(
     title="Webhooks delete",
-    tags={"social", "webhooks", "write"},
+    tags={"social", "webhooks", "write", "destructive"},
     annotations=ToolAnnotations(title="Webhooks delete", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True),
 )
 async def webhooks_delete() -> dict:
