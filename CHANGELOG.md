@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.40] - 2026-06-10
+
+- feat: fastmcp 3.4.2 uplift — annotations, structured output, resources, prompts, context (#17)
+
+
 ## [0.3.39] - 2026-05-19
 
 - fix(zernio): unwrap populated accountId in posts_schedule recreate
