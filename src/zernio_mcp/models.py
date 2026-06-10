@@ -44,8 +44,12 @@ class Account(_Lenient):
 class AccountList(BaseModel):
     """Result of ``accounts_list`` / ``accounts_health``."""
 
-    accounts: list[Account] = Field(description="Connected accounts.")
+    accounts: list[Account] = Field(
+        default_factory=list, description="Connected accounts."
+    )
     error: str | None = Field(default=None, description="Set when the call failed.")
+
+    model_config = ConfigDict(extra="allow")
 
 
 # ---------------------------------------------------------------------------
