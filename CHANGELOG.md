@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.42] - 2026-06-10
+
+- ci: bump actions to node24 majors (#18)
+
+
 ## [0.3.41] - 2026-06-10
 
 - ci(deps): bump actions/setup-python from 5 to 6 (#1)
