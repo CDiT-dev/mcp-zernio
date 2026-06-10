@@ -35,7 +35,11 @@ def _detect_platform(host: str) -> str | None:
     return None
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Research download post",
+    tags={"social", "research", "read"},
+    annotations=ToolAnnotations(title="Research download post", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def research_download_post(url: str) -> dict:
     """[social] Download post metadata from any supported platform using a post URL.
 
@@ -66,7 +70,11 @@ async def research_download_post(url: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Youtube transcript",
+    tags={"social", "research", "youtube", "read"},
+    annotations=ToolAnnotations(title="Youtube transcript", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def youtube_transcript(url: str) -> dict:
     """[social] Get a YouTube video's transcript text.
 
@@ -79,7 +87,11 @@ async def youtube_transcript(url: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Instagram hashtag",
+    tags={"social", "research", "instagram", "read"},
+    annotations=ToolAnnotations(title="Instagram hashtag", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def instagram_hashtag(hashtag: str) -> dict:
     """[social] Check Instagram hashtag performance — usage count, related hashtags, competition level.
 
@@ -92,7 +104,11 @@ async def instagram_hashtag(hashtag: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Reddit subreddit rules",
+    tags={"social", "research", "reddit", "read"},
+    annotations=ToolAnnotations(title="Reddit subreddit rules", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def reddit_subreddit_rules(subreddit: str) -> dict:
     """[social] Check subreddit posting rules, allowed content types, and flair requirements.
 

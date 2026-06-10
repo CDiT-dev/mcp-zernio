@@ -9,7 +9,16 @@ from zernio_mcp.client import ZernioAPIError, cache_get, cache_set, cache_invali
 from zernio_mcp.tools._common import client, error
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="List brand profiles",
+    tags={"social", "profiles", "read"},
+    annotations=ToolAnnotations(
+        title="List brand profiles",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def profiles_list() -> dict:
     """[social] List all brand profile groupings with their associated account IDs.
 
@@ -28,7 +37,16 @@ async def profiles_list() -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Create brand profile",
+    tags={"social", "profiles", "write"},
+    annotations=ToolAnnotations(
+        title="Create brand profile",
+        readOnlyHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    ),
+)
 async def profiles_create(name: str) -> dict:
     """[social] Create a new brand profile.
 
@@ -43,7 +61,16 @@ async def profiles_create(name: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Get brand profile",
+    tags={"social", "profiles", "read"},
+    annotations=ToolAnnotations(
+        title="Get brand profile",
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def profiles_get(profile_id: str) -> dict:
     """[social] Get details for a specific brand profile.
 
@@ -56,7 +83,16 @@ async def profiles_get(profile_id: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Update brand profile",
+    tags={"social", "profiles", "write"},
+    annotations=ToolAnnotations(
+        title="Update brand profile",
+        readOnlyHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def profiles_update(profile_id: str, name: str) -> dict:
     """[social] Update a brand profile.
 
@@ -72,7 +108,17 @@ async def profiles_update(profile_id: str, name: str) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Delete brand profile",
+    tags={"social", "profiles", "write"},
+    annotations=ToolAnnotations(
+        title="Delete brand profile",
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+)
 async def profiles_delete(profile_id: str) -> dict:
     """[social] Delete a brand profile. Connected accounts are not disconnected.
 

@@ -9,7 +9,11 @@ from zernio_mcp.client import ZernioAPIError, validate_url_for_ssrf, SSRFError
 from zernio_mcp.tools._common import client, error
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Webhooks get",
+    tags={"social", "webhooks", "read"},
+    annotations=ToolAnnotations(title="Webhooks get", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def webhooks_get() -> dict:
     """[social] Get current webhook configuration (URL, events, status)."""
     try:
@@ -18,7 +22,11 @@ async def webhooks_get() -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Webhooks create",
+    tags={"social", "webhooks", "write"},
+    annotations=ToolAnnotations(title="Webhooks create", readOnlyHint=False, idempotentHint=False, openWorldHint=True),
+)
 async def webhooks_create(url: str, events: list[str]) -> dict:
     """[social] Create a webhook configuration.
 
@@ -35,7 +43,11 @@ async def webhooks_create(url: str, events: list[str]) -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Webhooks update",
+    tags={"social", "webhooks", "write"},
+    annotations=ToolAnnotations(title="Webhooks update", readOnlyHint=False, idempotentHint=True, openWorldHint=True),
+)
 async def webhooks_update(url: str | None = None, events: list[str] | None = None) -> dict:
     """[social] Update webhook configuration.
 
@@ -58,7 +70,11 @@ async def webhooks_update(url: str | None = None, events: list[str] | None = Non
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True))
+@mcp.tool(
+    title="Webhooks delete",
+    tags={"social", "webhooks", "write"},
+    annotations=ToolAnnotations(title="Webhooks delete", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def webhooks_delete() -> dict:
     """[social] Remove webhook configuration."""
     try:
@@ -67,7 +83,11 @@ async def webhooks_delete() -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False))
+@mcp.tool(
+    title="Webhooks test",
+    tags={"social", "webhooks", "write"},
+    annotations=ToolAnnotations(title="Webhooks test", readOnlyHint=False, idempotentHint=False, openWorldHint=True),
+)
 async def webhooks_test() -> dict:
     """[social] Send a test event to the configured webhook URL."""
     try:
@@ -76,7 +96,11 @@ async def webhooks_test() -> dict:
         return error(e.message)
 
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+@mcp.tool(
+    title="Webhooks logs",
+    tags={"social", "webhooks", "read"},
+    annotations=ToolAnnotations(title="Webhooks logs", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+)
 async def webhooks_logs(limit: int = 20) -> dict:
     """[social] Get webhook delivery logs with status codes and timestamps.
 
