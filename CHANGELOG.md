@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.43] - 2026-06-10
+
+- feat(zernio): typed output models for high-traffic tools (pass 3) (#19)
+
+
 ## [0.3.42] - 2026-06-10
 
 - ci: bump actions to node24 majors (#18)
