@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.41] - 2026-06-10
+
+- ci(deps): bump actions/setup-python from 5 to 6 (#1)
+
+
 ## [0.3.40] - 2026-06-10
 
 - feat: fastmcp 3.4.2 uplift — annotations, structured output, resources, prompts, context (#17)
