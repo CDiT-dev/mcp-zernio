@@ -6,12 +6,14 @@ from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
 from zernio_mcp.client import ZernioAPIError
+from zernio_mcp.models import CommentList
 from zernio_mcp.tools._common import client, error
 
 
 @mcp.tool(
     title="Comments list",
     tags={"social", "comments", "read"},
+    output_schema=CommentList.model_json_schema(),
     annotations=ToolAnnotations(title="Comments list", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
 )
 async def comments_list(

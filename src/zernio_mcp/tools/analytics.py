@@ -52,6 +52,7 @@ async def analytics_posts(
 @mcp.tool(
     title="Aggregated analytics insights",
     tags={"social", "analytics", "read"},
+    output_schema=AnalyticsResult.model_json_schema(),
     annotations=ToolAnnotations(
         title="Aggregated analytics insights",
         readOnlyHint=True,
@@ -123,6 +124,7 @@ async def analytics_youtube_daily(
 @mcp.tool(
     title="Instagram insights + demographics",
     tags={"social", "analytics", "instagram", "read"},
+    output_schema=AnalyticsResult.model_json_schema(),
     annotations=ToolAnnotations(
         title="Instagram insights + demographics",
         readOnlyHint=True,

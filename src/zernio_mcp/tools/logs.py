@@ -6,12 +6,14 @@ from mcp.types import ToolAnnotations
 
 from zernio_mcp.server import mcp
 from zernio_mcp.client import ZernioAPIError
+from zernio_mcp.models import LogList
 from zernio_mcp.tools._common import client, error
 
 
 @mcp.tool(
     title="Logs posts",
     tags={"social", "logs", "read"},
+    output_schema=LogList.model_json_schema(),
     annotations=ToolAnnotations(title="Logs posts", readOnlyHint=True, idempotentHint=True, openWorldHint=True),
 )
 async def logs_posts(limit: int = 20) -> dict:
