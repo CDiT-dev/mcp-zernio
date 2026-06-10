@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.44] - 2026-06-10
+
+- feat(zernio): tool tags for read/write/destructive profiles (shelf) (#20)
+
+
 ## [0.3.43] - 2026-06-10
 
 - feat(zernio): typed output models for high-traffic tools (pass 3) (#19)
