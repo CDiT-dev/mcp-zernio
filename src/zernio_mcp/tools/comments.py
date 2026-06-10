@@ -59,7 +59,7 @@ async def comments_reply(post_id: str, comment_id: str, content: str) -> dict:
 
 @mcp.tool(
     title="Comments delete",
-    tags={"social", "comments", "write"},
+    tags={"social", "comments", "write", "destructive"},
     annotations=ToolAnnotations(title="Comments delete", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True),
 )
 async def comments_delete(post_id: str, comment_id: str) -> dict:

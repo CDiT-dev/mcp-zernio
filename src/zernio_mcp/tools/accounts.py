@@ -170,7 +170,7 @@ async def account_move(account_id: str, target_profile_id: str) -> dict:
 
 @mcp.tool(
     title="Disconnect account",
-    tags={"social", "accounts", "write"},
+    tags={"social", "accounts", "write", "destructive"},
     annotations=ToolAnnotations(
         title="Disconnect account",
         readOnlyHint=False,

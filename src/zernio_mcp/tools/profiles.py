@@ -110,7 +110,7 @@ async def profiles_update(profile_id: str, name: str) -> dict:
 
 @mcp.tool(
     title="Delete brand profile",
-    tags={"social", "profiles", "write"},
+    tags={"social", "profiles", "write", "destructive"},
     annotations=ToolAnnotations(
         title="Delete brand profile",
         readOnlyHint=False,

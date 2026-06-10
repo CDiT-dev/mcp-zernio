@@ -240,7 +240,7 @@ async def posts_list(
 
 @mcp.tool(
     title="Delete draft/scheduled post",
-    tags={"social", "posts", "write"},
+    tags={"social", "posts", "write", "destructive"},
     annotations=ToolAnnotations(
         title="Delete draft/scheduled post",
         readOnlyHint=False,

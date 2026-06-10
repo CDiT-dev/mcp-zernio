@@ -179,7 +179,7 @@ async def inbox_message_edit(conversation_id: str, message_id: str, content: str
 
 @mcp.tool(
     title="Delete message",
-    tags={"social", "inbox", "write"},
+    tags={"social", "inbox", "write", "destructive"},
     annotations=ToolAnnotations(
         title="Delete message",
         readOnlyHint=False,

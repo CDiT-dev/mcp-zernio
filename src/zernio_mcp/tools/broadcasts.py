@@ -90,7 +90,7 @@ async def broadcasts_update(broadcast_id: str, name: str | None = None, content:
 
 @mcp.tool(
     title="Broadcasts delete",
-    tags={"social", "broadcasts", "write"},
+    tags={"social", "broadcasts", "write", "destructive"},
     annotations=ToolAnnotations(title="Broadcasts delete", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True),
 )
 async def broadcasts_delete(broadcast_id: str) -> dict:
