@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.45] - 2026-06-30
+
+- docs: add internal README; sync openspec fleet ref and uv.lock version
+
+
 ## [0.3.44] - 2026-06-10
 
 - feat(zernio): tool tags for read/write/destructive profiles (shelf) (#20)
