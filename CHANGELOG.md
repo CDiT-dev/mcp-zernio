@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.46] - 2026-07-08
+
+- fix: fastmcp>=3.4.3 + allowed_hosts=['*'] — 3.4.3 rejects non-localhost Host with 421 (edge is CF-Access/Tailscale gated)
+
+
 ## [0.3.45] - 2026-06-30
 
 - docs: add internal README; sync openspec fleet ref and uv.lock version
