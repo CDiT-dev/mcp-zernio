@@ -14,6 +14,7 @@ from . import __version__
 from .auth import BearerTokenVerifier
 from zernio_mcp.client import close_shared_client, get_shared_client
 from zernio_mcp.config import settings
+from zernio_mcp.usage import UsageMiddleware
 
 
 @asynccontextmanager
@@ -71,6 +72,7 @@ mcp = FastMCP(
         ),
     ],
 )
+mcp.add_middleware(UsageMiddleware("zernio"))
 
 
 def _register_tools():
