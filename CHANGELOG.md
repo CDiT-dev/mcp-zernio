@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.49] - 2026-09-27
+
+- chore: add usage telemetry middleware (fleet task 1.3) (#28)
+
+
 ## [0.3.47] - 2026-07-08
 
 - openspec: reference consolidated cdit store
